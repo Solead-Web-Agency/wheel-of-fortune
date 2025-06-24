@@ -153,11 +153,38 @@ body {
   }
 }
 
-@keyframes spin {
+@keyframes smoothSpin {
   0% {
     transform: rotate(0deg);
   }
   100% {
-    transform: rotate(1080deg); /* 3 tours */
+    transform: rotate(1080deg); /* 3 tours exacts, sans à-coups */
+  }
+}
+
+/* Optimisations tablette */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem !important;
+  }
+  
+  .spin-button {
+    font-size: 1.1rem !important;
+    padding: 0.8rem 2rem !important;
+  }
+}
+
+/* Améliorations visuelles */
+.winner-announcement {
+  transform: scale(1);
+  animation: winnerPulse 2s ease-in-out infinite;
+}
+
+@keyframes winnerPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
 }
