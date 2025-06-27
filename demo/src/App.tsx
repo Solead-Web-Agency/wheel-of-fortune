@@ -65,6 +65,37 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const config = festivalConfigs[festival];
 
+  // Fonction pour dessiner du texte courbé le long d'un arc
+  const drawCurvedText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, startAngle: number, textRadius: number) => {
+    // Calculer l'angle total nécessaire pour le texte
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    const anglePerPixel = 1 / textRadius; // Approximation de l'angle par pixel
+    const totalAngle = textWidth * anglePerPixel;
+    
+    // Commencer l'angle pour centrer le texte
+    let currentAngle = startAngle - totalAngle / 2;
+    
+    // Dessiner chaque caractère individuellement
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const charWidth = ctx.measureText(char).width;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(currentAngle);
+      ctx.translate(textRadius, 0);
+      ctx.rotate(Math.PI / 2); // Orienter le caractère perpendiculairement au rayon
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+      
+      // Avancer à la position du caractère suivant
+      currentAngle += (charWidth * anglePerPixel);
+    }
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -115,23 +146,17 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Texte du segment
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(startAngle + segmentAngleRadians / 2);
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
+      // Texte du segment - version courbée
       ctx.fillStyle = segment.textColor;
       
       // Ajuster la taille du texte pour le bonus
       if (segment.type === 'bonus') {
         ctx.font = "bold 14px Arial";
-        ctx.fillText(segment.title, radius / 2.5, 0);
+        drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.7);
       } else {
         ctx.font = "bold 16px Arial";
-        ctx.fillText(segment.title, radius / 2.2, 0);
+        drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.65);
       }
-      ctx.restore();
       
       currentAngle += segmentAngleDegrees;
     });
