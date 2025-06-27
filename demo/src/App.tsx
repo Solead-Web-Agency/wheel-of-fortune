@@ -18,14 +18,52 @@ interface StockManager {
   totalDistribue: { [key: number]: number };
 }
 
+type Festival = 'francofolies' | 'goldencoast';
+
+// Configuration des festivals
+const festivalConfigs = {
+  francofolies: {
+    name: "Francofolies",
+    colors: {
+      primary: "#C41E3A",
+      secondary: "#2196F3", 
+      accent: "#FFD700",
+      bonus: "#9C27B0"
+    },
+    segments: [
+      { id: 1, title: "🎶 T-shirt Francos", color: "#C41E3A", textColor: "#FFFFFF", stock: 2000, stockParJour: 1000, type: 'lot' as const },
+      { id: 2, title: "🎤 Tote bag", color: "#2196F3", textColor: "#FFFFFF", stock: 1500, stockParJour: 750, type: 'lot' as const },
+      { id: 3, title: "🎵 Badge collector", color: "#FFD700", textColor: "#000000", stock: 800, stockParJour: 400, type: 'lot' as const },
+      { id: 4, title: "✨ BONUS VIP", color: "#9C27B0", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+    ]
+  },
+  goldencoast: {
+    name: "Golden Coast",
+    colors: {
+      primary: "#FF8C00",
+      secondary: "#32CD32",
+      accent: "#FFD700", 
+      bonus: "#FF1493"
+    },
+    segments: [
+      { id: 1, title: "🏖️ Casquette GC", color: "#FF8C00", textColor: "#FFFFFF", stock: 1800, stockParJour: 900, type: 'lot' as const },
+      { id: 2, title: "🌊 Serviette plage", color: "#32CD32", textColor: "#FFFFFF", stock: 1200, stockParJour: 600, type: 'lot' as const },
+      { id: 3, title: "☀️ Crème solaire", color: "#FFD700", textColor: "#000000", stock: 900, stockParJour: 450, type: 'lot' as const },
+      { id: 4, title: "🎁 SURPRISE", color: "#FF1493", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+    ]
+  }
+};
+
 // Composant roue segmentée pour tablette
-function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
+function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }: {
   segments: WheelSegment[];
   spinning: boolean;
   result: WheelSegment | null;
   rotationAngle: number;
+  festival: Festival;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const config = festivalConfigs[festival];
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -88,7 +126,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
       // Ajuster la taille du texte pour le bonus
       if (segment.type === 'bonus') {
         ctx.font = "bold 14px Arial";
-        ctx.fillText('✨ BONUS', radius / 2.5, 0);
+        ctx.fillText(segment.title, radius / 2.5, 0);
       } else {
         ctx.font = "bold 16px Arial";
         ctx.fillText(segment.title, radius / 2.2, 0);
@@ -101,16 +139,16 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
     // Restaurer le contexte
     ctx.restore();
 
-    // Cercle central doré
+    // Cercle central avec couleur du festival
     ctx.beginPath();
     ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
-    ctx.fillStyle = "#FFD700";
+    ctx.fillStyle = config.colors.accent;
     ctx.fill();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-  }, [segments, rotationAngle]);
+  }, [segments, rotationAngle, festival]);
 
   return (
     <div style={{ 
@@ -122,7 +160,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      {/* Flèche indicatrice fixe */}
+      {/* Flèche indicatrice fixe avec couleur du festival */}
       <div style={{
         position: 'absolute',
         top: '10px',
@@ -132,7 +170,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
         height: '0',
         borderLeft: '20px solid transparent',
         borderRight: '20px solid transparent',
-        borderTop: '30px solid #FF0000',
+        borderTop: `30px solid ${config.colors.primary}`,
         zIndex: 10,
         filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
       }} />
@@ -141,9 +179,9 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
       <canvas
         ref={canvasRef}
         style={{
-          border: '8px solid #FFD700',
+          border: `8px solid ${config.colors.accent}`,
           borderRadius: '50%',
-          boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+          boxShadow: `0 0 30px ${config.colors.accent}60`,
           cursor: 'pointer'
         }}
       />
@@ -186,13 +224,8 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle }: {
 }
 
 function App() {
-  // Configuration des lots - 3 segments principaux + 1 bonus rare
-  const [segments] = useState<WheelSegment[]>([
-    { id: 1, title: "🎁 Bobs", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' },
-    { id: 2, title: "💦 Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' },
-    { id: 3, title: "🍌 Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' },
-    { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' },
-  ]);
+  const [festival, setFestival] = useState<Festival>('francofolies');
+  const [segments, setSegments] = useState<WheelSegment[]>(festivalConfigs.francofolies.segments);
 
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<WheelSegment | null>(null);
@@ -205,9 +238,35 @@ function App() {
   });
   const [showBonusPopup, setShowBonusPopup] = useState(false);
 
+  // Changer de festival
+  const changerFestival = (nouveauFestival: Festival) => {
+    setFestival(nouveauFestival);
+    setSegments(festivalConfigs[nouveauFestival].segments);
+    setResult(null);
+    setRotationAngle(0);
+    
+    // Charger les données spécifiques au festival
+    const savedData = localStorage.getItem(`festival-wheel-data-${nouveauFestival}`);
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        setStockManager(data.stockManager || { jour: 1, lotsDistribuesAujourdhui: {}, totalDistribue: {} });
+        setJour(data.jour || 1);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+        setStockManager({ jour: 1, lotsDistribuesAujourdhui: {}, totalDistribue: {} });
+        setJour(1);
+      }
+    } else {
+      // Nouveau festival, reset
+      setStockManager({ jour: 1, lotsDistribuesAujourdhui: {}, totalDistribue: {} });
+      setJour(1);
+    }
+  };
+
   // Charger les données sauvegardées
   useEffect(() => {
-    const saved = localStorage.getItem('festival-wheel-data');
+    const saved = localStorage.getItem(`festival-wheel-data-${festival}`);
     if (saved) {
       const data = JSON.parse(saved);
       setStockManager(data.stockManager || { jour: 1, lotsDistribuesAujourdhui: {}, totalDistribue: {} });
@@ -218,7 +277,7 @@ function App() {
   // Sauvegarder les données
   const saveData = (newStockManager: StockManager, newJour: number) => {
     const data = { stockManager: newStockManager, jour: newJour };
-    localStorage.setItem('festival-wheel-data', JSON.stringify(data));
+    localStorage.setItem(`festival-wheel-data-${festival}`, JSON.stringify(data));
   };
 
   // Logique de tirage - 33% pour chaque lot principal + 1% bonus
@@ -358,8 +417,8 @@ function App() {
     setJour(1);
     setResult(null);
     setRotationAngle(0);
-    localStorage.removeItem('festival-wheel-data');
-    console.log("🔄 Reset complet effectué");
+    localStorage.removeItem(`festival-wheel-data-${festival}`);
+    console.log(`🔄 Reset complet effectué pour ${festivalConfigs[festival].name}`);
   };
 
   return (
@@ -367,11 +426,62 @@ function App() {
       {/* Header Festival */}
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <h1 className="title" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-          🏆 Roue des Gagnants
+          Roue des Gagnants
         </h1>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '1rem' }}>
-          <span style={{ color: '#FFD700', fontSize: '1.1rem', fontWeight: 'bold' }}>🎵 Francofolies</span>
-          <span style={{ color: '#FFA500', fontSize: '1.1rem', fontWeight: 'bold' }}>🌊 Golden Coast Dijon</span>
+        
+        {/* Sélecteur de Festival */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '1rem' }}>
+          <button 
+            onClick={() => changerFestival('francofolies')}
+            style={{
+              background: festival === 'francofolies' 
+                ? `linear-gradient(135deg, ${festivalConfigs.francofolies.colors.primary}, ${festivalConfigs.francofolies.colors.secondary})`
+                : 'linear-gradient(to right, #666, #888)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 25px',
+              borderRadius: '25px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: festival === 'francofolies' ? '0 4px 15px rgba(196, 30, 58, 0.4)' : 'none',
+              transform: festival === 'francofolies' ? 'scale(1.05)' : 'scale(1)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🎵 Francofolies
+          </button>
+          <button 
+            onClick={() => changerFestival('goldencoast')}
+            style={{
+              background: festival === 'goldencoast' 
+                ? `linear-gradient(135deg, ${festivalConfigs.goldencoast.colors.primary}, ${festivalConfigs.goldencoast.colors.secondary})`
+                : 'linear-gradient(to right, #666, #888)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 25px',
+              borderRadius: '25px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: festival === 'goldencoast' ? '0 4px 15px rgba(255, 140, 0, 0.4)' : 'none',
+              transform: festival === 'goldencoast' ? 'scale(1.05)' : 'scale(1)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🏖️ Golden Coast
+          </button>
+        </div>
+        
+        {/* Nom du festival actuel */}
+        <div style={{ 
+          fontSize: '1.3rem', 
+          fontWeight: 'bold', 
+          color: festivalConfigs[festival].colors.primary,
+          marginBottom: '1rem',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+        }}>
+          {festivalConfigs[festival].name}
         </div>
         
         {/* Sélecteur de jour */}
@@ -414,6 +524,7 @@ function App() {
           spinning={spinning}
           result={result}
           rotationAngle={rotationAngle}
+          festival={festival}
         />
       </div>
 

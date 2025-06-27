@@ -1,54 +1,86 @@
-# React + TypeScript + Vite
+# 🎡 Roue des Gagnants - Festivals
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application web de roue de la fortune pour les festivals Francofolies et Golden Coast.
 
-Currently, two official plugins are available:
+## 🎪 Fonctionnalités
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **2 festivals distincts** avec leurs propres lots et couleurs
+- **Gestion des stocks** par jour et par festival
+- **Système de probabilités** : 33% pour chaque lot principal + 1% pour le bonus
+- **Sauvegarde automatique** des données par festival
+- **Interface tactile** optimisée pour tablettes
 
-## Expanding the ESLint configuration
+## 🎵 Festivals
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Francofolies
+- 🎶 T-shirt Francos
+- 🎤 Tote bag  
+- 🎵 Badge collector
+- ✨ Bonus VIP (question bonus)
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Golden Coast
+- 🏖️ Casquette GC
+- 🌊 Serviette plage
+- ☀️ Crème solaire
+- 🎁 Surprise (question bonus)
+
+## 🚀 Déploiement sur Vercel
+
+### Méthode 1 : Interface Vercel
+1. Connectez-vous sur [vercel.com](https://vercel.com)
+2. Cliquez sur "New Project"
+3. Importez votre repository GitHub
+4. Sélectionnez le dossier `demo/` comme répertoire racine
+5. Vérifiez que les paramètres de build sont corrects :
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
+6. Cliquez sur "Deploy"
+
+### Méthode 2 : CLI Vercel
+```bash
+cd demo/
+npm install -g vercel
+vercel --prod
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🛠️ Développement local
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+cd demo/
+npm install
+npm run dev
 ```
+
+L'application sera disponible sur `http://localhost:5173`
+
+## 📱 Utilisation
+
+1. **Sélectionnez le festival** avec les boutons en haut
+2. **Choisissez le jour** (Jour 1 ou Jour 2)
+3. **Lancez la roue** avec le bouton principal
+4. **Suivez les statistiques** dans le panneau admin en bas à droite
+
+## 🎯 Administration
+
+- **Statistiques en temps réel** : Voir les lots distribués par jour
+- **Reset complet** : Bouton de remise à zéro (accessible via le panneau admin)
+- **Sauvegarde automatique** : Les données sont sauvegardées séparément pour chaque festival
+
+## 🎨 Personnalisation
+
+Les configurations des festivals se trouvent dans `src/App.tsx` :
+- Couleurs thématiques
+- Lots disponibles
+- Stocks par jour
+- Emojis et textes
+
+## 📊 Probabilités
+
+- **33%** pour chaque lot principal (si en stock)
+- **1%** pour le bonus rare
+- **Répartition automatique** si certains lots sont épuisés
+
+---
+
+*Application développée pour les festivals Francofolies et Golden Coast* 🎪

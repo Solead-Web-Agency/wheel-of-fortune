@@ -1,4 +1,4 @@
-import { WheelSegment } from "./WheelSegment";
+import type { WheelSegment } from "./WheelSegment";
 
 export interface WheelOfFortuneProps {
   segments: WheelSegment[];

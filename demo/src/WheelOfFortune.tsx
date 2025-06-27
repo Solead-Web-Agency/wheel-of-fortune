@@ -2,8 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "./lib/utils";
-import { WheelSegment } from "./props/WheelSegment";
-import { WheelOfFortuneProps } from "./props/WheelOfFortuneProps";
+import type { WheelOfFortuneProps } from "./props/WheelOfFortuneProps";
 
 const WheelOfFortune: React.FC<WheelOfFortuneProps> = (
   props: WheelOfFortuneProps
@@ -454,28 +453,7 @@ const WheelOfFortune: React.FC<WheelOfFortuneProps> = (
     hasInitialized.current = true;
   }, [segments.length]);
 
-  // Determines which segment is at the top
-  const getTopSegment = (angle: number): WheelSegment => {
-    // Normalize the angle to 0-360 range
-    const normalizedAngle = ((angle % 360) + 360) % 360;
 
-    // Calculate which segment is at the top (270 degrees)
-    const segmentAngle = 360 / segments.length;
-
-    // The wheel rotates clockwise, so we need to find which segment is at the top
-    // We need to adjust the calculation to account for the wheel's orientation
-    // The top position is at 270 degrees (3π/2)
-    const topPosition = 270;
-
-    // Calculate how far the wheel has rotated from the top position
-    const angleFromTop = (normalizedAngle - topPosition + 360) % 360;
-
-    // Calculate which segment is at the top
-    const segmentIndex = Math.floor(angleFromTop / segmentAngle);
-
-    // Return the segment at the calculated index (in reverse order because of rotation direction)
-    return segments[(segments.length - segmentIndex - 1) % segments.length];
-  };
 
   // Resets the wheel to initial position
   const resetWheel = async (): Promise<void> => {
