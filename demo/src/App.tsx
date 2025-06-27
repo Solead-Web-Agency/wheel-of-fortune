@@ -28,13 +28,13 @@ const festivalConfigs = {
       primary: "#C41E3A",
       secondary: "#2196F3", 
       accent: "#FFD700",
-      bonus: "#9C27B0"
+      bonus: "#FF6B35"
     },
     segments: [
-      { id: 1, title: "🎶 T-shirt Francos", color: "#C41E3A", textColor: "#FFFFFF", stock: 2000, stockParJour: 1000, type: 'lot' as const },
-      { id: 2, title: "🎤 Tote bag", color: "#2196F3", textColor: "#FFFFFF", stock: 1500, stockParJour: 750, type: 'lot' as const },
-      { id: 3, title: "🎵 Badge collector", color: "#FFD700", textColor: "#000000", stock: 800, stockParJour: 400, type: 'lot' as const },
-      { id: 4, title: "✨ BONUS VIP", color: "#9C27B0", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+      { id: 1, title: "🎁 Bobs", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "💦 Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "🍌 Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   },
   goldencoast: {
@@ -43,13 +43,13 @@ const festivalConfigs = {
       primary: "#FF8C00",
       secondary: "#32CD32",
       accent: "#FFD700", 
-      bonus: "#FF1493"
+      bonus: "#FF6B35"
     },
     segments: [
-      { id: 1, title: "🏖️ Casquette GC", color: "#FF8C00", textColor: "#FFFFFF", stock: 1800, stockParJour: 900, type: 'lot' as const },
-      { id: 2, title: "🌊 Serviette plage", color: "#32CD32", textColor: "#FFFFFF", stock: 1200, stockParJour: 600, type: 'lot' as const },
-      { id: 3, title: "☀️ Crème solaire", color: "#FFD700", textColor: "#000000", stock: 900, stockParJour: 450, type: 'lot' as const },
-      { id: 4, title: "🎁 SURPRISE", color: "#FF1493", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+      { id: 1, title: "🎁 Bobs", color: "#FF8C00", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "💦 Brumisateur", color: "#32CD32", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "🍌 Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   }
 };
