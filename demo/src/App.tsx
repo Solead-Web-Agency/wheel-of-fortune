@@ -67,48 +67,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const config = festivalConfigs[festival];
 
-  // Cache des images chargées
-  const imageCache = useRef<{ [key: string]: HTMLImageElement }>({});
 
-  // Fonction pour charger une image
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      if (imageCache.current[src]) {
-        resolve(imageCache.current[src]);
-        return;
-      }
-      
-      const img = new Image();
-      img.onload = () => {
-        imageCache.current[src] = img;
-        resolve(img);
-      };
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
-
-  // Fonction pour dessiner une image dans un segment
-  const drawImageInSegment = (ctx: CanvasRenderingContext2D, img: HTMLImageElement, centerX: number, centerY: number, startAngle: number, segmentAngle: number, radius: number) => {
-    ctx.save();
-    
-    // Se positionner au centre du segment
-    const midAngle = startAngle + segmentAngle / 2;
-    const imageDistance = radius * 0.4; // Position de l'image dans le segment
-    const imageX = centerX + Math.cos(midAngle) * imageDistance;
-    const imageY = centerY + Math.sin(midAngle) * imageDistance;
-    
-    // Taille de l'image (adaptée à la taille du segment)
-    const imageSize = Math.min(radius * 0.3, 80);
-    
-    ctx.translate(imageX, imageY);
-    ctx.rotate(midAngle + Math.PI / 2); // Orienter l'image avec le segment
-    
-    // Dessiner l'image centrée
-    ctx.drawImage(img, -imageSize / 2, -imageSize / 2, imageSize, imageSize);
-    
-    ctx.restore();
-  };
 
   // Fonction pour dessiner du texte courbé le long d'un arc (améliorée)
   const drawCurvedText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, startAngle: number, textRadius: number) => {
@@ -340,7 +299,7 @@ function App() {
   // Mode admin caché
   const [showAdminInterface, setShowAdminInterface] = useState(false);
   const [clickCount, setClickCount] = useState(0);
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fonction pour gérer les clics dans le coin supérieur droit
   const handleCornerClick = () => {
