@@ -35,7 +35,7 @@ const festivalConfigs = {
     segments: [
       { id: 1, title: "chapeau Bob", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
       { id: 2, title: "Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 3, title: "sac Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
       { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   },
@@ -50,7 +50,7 @@ const festivalConfigs = {
     segments: [
       { id: 1, title: "chapeau Bob", color: "#FF8C00", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
       { id: 2, title: "Brumisateur", color: "#32CD32", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 3, title: "sac Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
       { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   }
@@ -518,12 +518,13 @@ function App() {
         marginBottom: '2rem'
       }}>
         
-        {/* Colonne gauche - Logo France TV */}
+        {/* Colonne gauche - Logo France TV + Interface Admin */}
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          gap: '1.5rem'
         }}>
           <img 
             src="/francetv.png" 
@@ -533,6 +534,86 @@ function App() {
               objectFit: 'contain'
             }} 
           />
+
+          {/* Interface Admin - Sélecteur de Festival */}
+          {showAdminInterface && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <button 
+                onClick={() => changerFestival('francofolies')}
+                style={{
+                  background: festival === 'francofolies' 
+                    ? `linear-gradient(135deg, ${festivalConfigs.francofolies.colors.primary}, ${festivalConfigs.francofolies.colors.secondary})`
+                    : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 25px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: festival === 'francofolies' ? '0 4px 15px rgba(196, 30, 58, 0.4)' : 'none',
+                  transform: festival === 'francofolies' ? 'scale(1.05)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🎵 Francofolies
+              </button>
+              <button 
+                onClick={() => changerFestival('goldencoast')}
+                style={{
+                  background: festival === 'goldencoast' 
+                    ? `linear-gradient(135deg, ${festivalConfigs.goldencoast.colors.primary}, ${festivalConfigs.goldencoast.colors.secondary})`
+                    : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 25px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: festival === 'goldencoast' ? '0 4px 15px rgba(255, 140, 0, 0.4)' : 'none',
+                  transform: festival === 'goldencoast' ? 'scale(1.05)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🏖️ Golden Coast
+              </button>
+            </div>
+          )}
+
+          {/* Interface Admin - Sélecteur de jour */}
+          {showAdminInterface && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                onClick={() => changerJour(1)}
+                style={{
+                  background: jour === 1 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                📅 Jour 1
+              </button>
+              <button 
+                onClick={() => changerJour(2)}
+                style={{
+                  background: jour === 2 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                📅 Jour 2
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Colonne centrale - Roue avec bouton superposé */}
@@ -633,85 +714,7 @@ function App() {
             }} 
           />
 
-          {/* Sélecteur de Festival - Mode Admin uniquement */}
-          {showAdminInterface && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <button 
-                onClick={() => changerFestival('francofolies')}
-                style={{
-                  background: festival === 'francofolies' 
-                    ? `linear-gradient(135deg, ${festivalConfigs.francofolies.colors.primary}, ${festivalConfigs.francofolies.colors.secondary})`
-                    : 'linear-gradient(to right, #666, #888)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 25px',
-                  borderRadius: '25px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  boxShadow: festival === 'francofolies' ? '0 4px 15px rgba(196, 30, 58, 0.4)' : 'none',
-                  transform: festival === 'francofolies' ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                🎵 Francofolies
-              </button>
-              <button 
-                onClick={() => changerFestival('goldencoast')}
-                style={{
-                  background: festival === 'goldencoast' 
-                    ? `linear-gradient(135deg, ${festivalConfigs.goldencoast.colors.primary}, ${festivalConfigs.goldencoast.colors.secondary})`
-                    : 'linear-gradient(to right, #666, #888)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 25px',
-                  borderRadius: '25px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  boxShadow: festival === 'goldencoast' ? '0 4px 15px rgba(255, 140, 0, 0.4)' : 'none',
-                  transform: festival === 'goldencoast' ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                🏖️ Golden Coast
-              </button>
-            </div>
-          )}
 
-          {/* Sélecteur de jour - Mode Admin uniquement */}
-          {showAdminInterface && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button 
-                onClick={() => changerJour(1)}
-                style={{
-                  background: jour === 1 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '25px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                📅 Jour 1
-              </button>
-              <button 
-                onClick={() => changerJour(2)}
-                style={{
-                  background: jour === 2 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '25px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                📅 Jour 2
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -807,7 +810,7 @@ function App() {
               FÉLICITATIONS !
             </h2>
             <p style={{ fontSize: '1.3rem', marginBottom: '30px', lineHeight: '1.5' }}>
-              Bravo ! Vous avez gagné :
+              Vous avez gagné :
             </p>
             <div style={{
               background: 'rgba(255, 255, 255, 0.2)',
@@ -819,35 +822,33 @@ function App() {
                 🏆 {result.title}
               </h3>
             </div>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: '20px',
-              borderRadius: '15px',
-              marginBottom: '30px'
-            }}>
-              <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
-                💡 Présentez ce résultat au stand pour récupérer votre lot !
-              </p>
-            </div>
-            <button 
-              onClick={() => setShowWinnerPopup(false)}
-              style={{
-                background: 'linear-gradient(to right, #4CAF50, #45a049)',
-                color: 'white',
-                border: 'none',
-                padding: '15px 35px',
-                borderRadius: '25px',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-                transition: 'transform 0.2s ease'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              J'ai compris !
-            </button>
+                          <button 
+                onClick={() => setShowWinnerPopup(false)}
+                style={{
+                  background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 35px',
+                  borderRadius: '50px',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)',
+                  transition: 'all 0.3s ease',
+                  textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                  minWidth: '180px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.8)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
+                }}
+              >
+                J'ai compris !
+              </button>
           </div>
         </div>
       )}
