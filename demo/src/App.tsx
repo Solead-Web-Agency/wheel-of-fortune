@@ -57,10 +57,8 @@ const festivalConfigs = {
 };
 
 // Composant roue segmentée pour tablette
-function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }: {
+function SegmentedWheel({ segments, rotationAngle, festival }: {
   segments: WheelSegment[];
-  spinning: boolean;
-  result: WheelSegment | null;
   rotationAngle: number;
   festival: Festival;
 }) {
@@ -231,52 +229,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
         }}
       />
       
-      {/* Overlay pour les messages */}
-      {(spinning || result) && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0,0,0,0.85)',
-          padding: '20px',
-          borderRadius: '15px',
-          textAlign: 'center',
-          color: 'white',
-          fontWeight: 'bold',
-          fontSize: '18px',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-          zIndex: 5,
-          maxWidth: '250px'
-        }}>
-          {spinning ? (
-            <>
-              <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎯</div>
-              <div>Tirage en cours...</div>
-            </>
-          ) : result ? (
-            <>
-              <div style={{ fontSize: '30px', marginBottom: '10px' }}>
-                {result.type === 'defaite' ? '💔' : '🎉'}
-              </div>
-              {result.resultImage && (
-                <img 
-                  src={result.resultImage} 
-                  alt={result.title}
-                  style={{ 
-                    width: '80px', 
-                    height: '80px', 
-                    objectFit: 'contain',
-                    marginBottom: '10px',
-                    borderRadius: '10px'
-                  }} 
-                />
-              )}
-              <div style={{ fontSize: '16px' }}>{result.title}</div>
-            </>
-          ) : null}
-        </div>
-      )}
+
     </div>
   );
 }
@@ -295,6 +248,7 @@ function App() {
     totalDistribue: {}
   });
   const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   
   // Mode admin caché
   const [showAdminInterface, setShowAdminInterface] = useState(false);
@@ -470,9 +424,11 @@ function App() {
           setResult(selectedSegment);
           setSpinning(false);
           
-          // Afficher popup bonus si nécessaire
+          // Afficher popup selon le type de résultat
           if (selectedSegment.type === 'bonus') {
             setShowBonusPopup(true);
+          } else if (selectedSegment.type === 'lot') {
+            setShowWinnerPopup(true);
           }
           
           console.log(`🏆 Résultat final: ${selectedSegment.title}`);
@@ -493,6 +449,8 @@ function App() {
     setStockManager(newStockManager);
     setJour(nouveauJour);
     setResult(null);
+    setShowWinnerPopup(false);
+    setShowBonusPopup(false);
     saveData(newStockManager, nouveauJour);
   };
 
@@ -503,6 +461,8 @@ function App() {
     setJour(1);
     setResult(null);
     setRotationAngle(0);
+    setShowWinnerPopup(false);
+    setShowBonusPopup(false);
     localStorage.removeItem(`festival-wheel-data-${festival}`);
     console.log(`🔄 Reset complet effectué pour ${festivalConfigs[festival].name}`);
   };
@@ -575,15 +535,83 @@ function App() {
           />
         </div>
 
-        {/* Colonne centrale - Roue */}
-        <div className="wheel-container" style={{ display: 'flex', justifyContent: 'center' }}>
-          <SegmentedWheel
-            segments={segments}
-            spinning={spinning}
-            result={result}
-            rotationAngle={rotationAngle}
-            festival={festival}
-          />
+        {/* Colonne centrale - Roue avec bouton superposé */}
+        <div className="wheel-container" style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          position: 'relative'
+        }}>
+          {/* Filtre sur la roue quand elle n'est pas en train de tourner */}
+          <div style={{
+            position: 'relative',
+            filter: !spinning ? 'brightness(0.7) blur(1px)' : 'none',
+            transition: 'filter 0.3s ease'
+          }}>
+            <SegmentedWheel
+              segments={segments}
+              rotationAngle={rotationAngle}
+              festival={festival}
+            />
+          </div>
+          
+          {/* Bouton centré sur la roue */}
+          {!spinning && (
+            <button 
+              onClick={spinWheel}
+              className="spin-button"
+              style={{ 
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '1.1rem',
+                padding: '15px 25px',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)',
+                zIndex: 10,
+                transition: 'all 0.3s ease',
+                textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                minWidth: '180px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.8)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
+              }}
+            >
+              🎲 LANCER LA ROUE
+            </button>
+          )}
+          
+          {/* Message pendant le tirage */}
+          {spinning && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '15px 25px',
+              borderRadius: '25px',
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              zIndex: 10,
+              textAlign: 'center',
+              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.5)',
+              animation: 'pulse 1.5s infinite'
+            }}>
+              🎯 Tirage en cours...
+            </div>
+          )}
         </div>
 
         {/* Colonne droite - Logo Festival */}
@@ -687,43 +715,7 @@ function App() {
         </div>
       </div>
 
-      {/* Boutons principaux */}
-      <div className="buttons-container">
-        <button 
-          onClick={spinWheel}
-          disabled={spinning}
-          className="spin-button"
-          style={{ 
-            opacity: spinning ? 0.5 : 1,
-            fontSize: '1.3rem',
-            padding: '1rem 3rem'
-          }}
-        >
-          {spinning ? "🎯 Tirage en cours..." : "🎲 LANCER LA ROUE"}
-        </button>
-
-        {result && (
-          <div className="winner-announcement" style={{ maxWidth: '400px', margin: '20px auto' }}>
-            {result.type === 'bonus' ? (
-              <>
-                <h2 className="winner-title">✨ BONUS RARE !</h2>
-                <p className="winner-text">Question bonus déclenchée !</p>
-                <p style={{ color: '#fff', fontSize: '14px', marginTop: '10px' }}>
-                  Répondez à la question pour gagner un lot spécial !
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="winner-title">🎉 FÉLICITATIONS !</h2>
-                <p className="winner-text">Vous avez gagné : {result.title}</p>
-                <p style={{ color: '#fff', fontSize: '14px', marginTop: '10px' }}>
-                  Présentez ce résultat au stand pour récupérer votre lot !
-                </p>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      
 
       {/* Statistiques pour l'admin - Mode Admin uniquement */}
       {showAdminInterface && (
@@ -783,6 +775,80 @@ function App() {
           >
             👁️ Masquer Admin
           </button>
+        </div>
+      )}
+
+      {/* Popup Félicitations */}
+      {showWinnerPopup && result && result.type === 'lot' && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: `linear-gradient(135deg, ${festivalConfigs[festival].colors.primary}, ${festivalConfigs[festival].colors.secondary})`,
+            padding: '40px',
+            borderRadius: '20px',
+            textAlign: 'center',
+            color: 'white',
+            maxWidth: '500px',
+            margin: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>🎉</div>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              FÉLICITATIONS !
+            </h2>
+            <p style={{ fontSize: '1.3rem', marginBottom: '30px', lineHeight: '1.5' }}>
+              Bravo ! Vous avez gagné :
+            </p>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              padding: '25px',
+              borderRadius: '15px',
+              marginBottom: '30px'
+            }}>
+              <h3 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '10px' }}>
+                🏆 {result.title}
+              </h3>
+            </div>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '20px',
+              borderRadius: '15px',
+              marginBottom: '30px'
+            }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                💡 Présentez ce résultat au stand pour récupérer votre lot !
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowWinnerPopup(false)}
+              style={{
+                background: 'linear-gradient(to right, #4CAF50, #45a049)',
+                color: 'white',
+                border: 'none',
+                padding: '15px 35px',
+                borderRadius: '25px',
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                transition: 'transform 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              J'ai compris !
+            </button>
+          </div>
         </div>
       )}
 
