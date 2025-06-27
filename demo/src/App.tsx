@@ -10,6 +10,8 @@ interface WheelSegment {
   stock: number;
   stockParJour: number;
   type: 'lot' | 'defaite' | 'bonus';
+  image?: string; // URL de l'image pour le segment
+  resultImage?: string; // URL de l'image pour l'affichage du résultat
 }
 
 interface StockManager {
@@ -31,9 +33,9 @@ const festivalConfigs = {
       bonus: "#FF6B35"
     },
     segments: [
-      { id: 1, title: "🎁 Bobs", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
-      { id: 2, title: "💦 Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "🍌 Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 1, title: "chapeau Bob", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
       { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   },
@@ -46,9 +48,9 @@ const festivalConfigs = {
       bonus: "#FF6B35"
     },
     segments: [
-      { id: 1, title: "🎁 Bobs", color: "#FF8C00", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
-      { id: 2, title: "💦 Brumisateur", color: "#32CD32", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "🍌 Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
+      { id: 1, title: "chapeau Bob", color: "#FF8C00", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "Brumisateur", color: "#32CD32", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
       { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
     ]
   }
@@ -65,26 +67,75 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const config = festivalConfigs[festival];
 
-  // Fonction pour dessiner du texte courbé le long d'un arc
+  // Cache des images chargées
+  const imageCache = useRef<{ [key: string]: HTMLImageElement }>({});
+
+  // Fonction pour charger une image
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      if (imageCache.current[src]) {
+        resolve(imageCache.current[src]);
+        return;
+      }
+      
+      const img = new Image();
+      img.onload = () => {
+        imageCache.current[src] = img;
+        resolve(img);
+      };
+      img.onerror = reject;
+      img.src = src;
+    });
+  };
+
+  // Fonction pour dessiner une image dans un segment
+  const drawImageInSegment = (ctx: CanvasRenderingContext2D, img: HTMLImageElement, centerX: number, centerY: number, startAngle: number, segmentAngle: number, radius: number) => {
+    ctx.save();
+    
+    // Se positionner au centre du segment
+    const midAngle = startAngle + segmentAngle / 2;
+    const imageDistance = radius * 0.4; // Position de l'image dans le segment
+    const imageX = centerX + Math.cos(midAngle) * imageDistance;
+    const imageY = centerY + Math.sin(midAngle) * imageDistance;
+    
+    // Taille de l'image (adaptée à la taille du segment)
+    const imageSize = Math.min(radius * 0.3, 80);
+    
+    ctx.translate(imageX, imageY);
+    ctx.rotate(midAngle + Math.PI / 2); // Orienter l'image avec le segment
+    
+    // Dessiner l'image centrée
+    ctx.drawImage(img, -imageSize / 2, -imageSize / 2, imageSize, imageSize);
+    
+    ctx.restore();
+  };
+
+  // Fonction pour dessiner du texte courbé le long d'un arc (améliorée)
   const drawCurvedText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, startAngle: number, textRadius: number) => {
-    // Calculer l'angle total nécessaire pour le texte
-    const textMetrics = ctx.measureText(text);
-    const textWidth = textMetrics.width;
-    const anglePerPixel = 1 / textRadius; // Approximation de l'angle par pixel
-    const totalAngle = textWidth * anglePerPixel;
+    // Ajustements selon la longueur du texte
+    const isLongText = text.length > 8;
+    const adjustedRadius = isLongText ? textRadius * 0.9 : textRadius; // Rapprocher du centre pour les textes longs
+    
+    // Espacement plus serré pour tous les textes
+    const spacingMultiplier = isLongText ? 0.7 : 0.5; // Resserrer davantage les caractères
+    
+    // Calculer l'espacement optimal entre les caractères
+    const totalChars = text.length;
+    const segmentAngleRad = (115 * Math.PI) / 180; // 115° en radians pour les segments principaux
+    const availableAngle = segmentAngleRad * 0.6; // Utiliser 60% de l'angle du segment (réduit de 70%)
+    const anglePerChar = availableAngle / totalChars * spacingMultiplier;
     
     // Commencer l'angle pour centrer le texte
-    let currentAngle = startAngle - totalAngle / 2;
+    let currentAngle = startAngle - (anglePerChar * (totalChars - 1)) / 2;
     
     // Dessiner chaque caractère individuellement
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      const charWidth = ctx.measureText(char).width;
       
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(currentAngle);
-      ctx.translate(textRadius, 0);
+      ctx.translate(adjustedRadius, 0);
       ctx.rotate(Math.PI / 2); // Orienter le caractère perpendiculairement au rayon
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -92,7 +143,7 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
       ctx.restore();
       
       // Avancer à la position du caractère suivant
-      currentAngle += (charWidth * anglePerPixel);
+      currentAngle += anglePerChar;
     }
   };
 
@@ -146,15 +197,25 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Texte du segment - version courbée
+      // Texte du segment - courbé pour tous les lots, droit pour le bonus
       ctx.fillStyle = segment.textColor;
       
-      // Ajuster la taille du texte pour le bonus
       if (segment.type === 'bonus') {
         ctx.font = "bold 14px Arial";
-        drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.7);
+        // Bonus : texte droit comme avant car la case est trop petite pour le texte courbé
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + segmentAngleRadians / 2);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(segment.title, radius / 2.5, 0);
+        ctx.restore();
       } else {
-        ctx.font = "bold 16px Arial";
+        // Ajuster la taille de police selon la longueur du texte
+        const isLongText = segment.title.length > 8;
+        ctx.font = isLongText ? "bold 14px Arial" : "bold 16px Arial";
+        
+        // Tous les lots : texte courbé (avec algorithme amélioré)
         drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.65);
       }
       
@@ -239,6 +300,19 @@ function SegmentedWheel({ segments, spinning, result, rotationAngle, festival }:
               <div style={{ fontSize: '30px', marginBottom: '10px' }}>
                 {result.type === 'defaite' ? '💔' : '🎉'}
               </div>
+              {result.resultImage && (
+                <img 
+                  src={result.resultImage} 
+                  alt={result.title}
+                  style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    objectFit: 'contain',
+                    marginBottom: '10px',
+                    borderRadius: '10px'
+                  }} 
+                />
+              )}
               <div style={{ fontSize: '16px' }}>{result.title}</div>
             </>
           ) : null}
@@ -262,6 +336,34 @@ function App() {
     totalDistribue: {}
   });
   const [showBonusPopup, setShowBonusPopup] = useState(false);
+  
+  // Mode admin caché
+  const [showAdminInterface, setShowAdminInterface] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fonction pour gérer les clics dans le coin supérieur droit
+  const handleCornerClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    // Reset du compteur après 2 secondes d'inactivité
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      setClickCount(0);
+    }, 2000);
+    
+    // Toggle le mode admin après 4 clics
+    if (newCount >= 4) {
+      setShowAdminInterface(!showAdminInterface);
+      setClickCount(0);
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    }
+  };
 
   // Changer de festival
   const changerFestival = (nouveauFestival: Festival) => {
@@ -447,110 +549,183 @@ function App() {
   };
 
   return (
-    <div className="app-container" style={{ padding: '1rem' }}>
-      {/* Header Festival */}
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <h1 className="title" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
+    <div className="app-container" style={{ padding: '1rem', position: 'relative' }}>
+      {/* Zone cliquable invisible pour activer le mode admin */}
+      <div 
+        onClick={handleCornerClick}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '60px',
+          height: '60px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          // Indicateur visuel subtil du nombre de clics
+          background: clickCount > 0 ? `rgba(255, 255, 255, ${clickCount * 0.1})` : 'transparent',
+          borderRadius: '0 0 0 50px'
+        }}
+                 title={`${clickCount}/4 clics pour ${showAdminInterface ? 'masquer' : 'activer'} le mode admin`}
+      />
+      
+      {/* Titre principal en haut */}
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h1 className="title" style={{ 
+          fontSize: '3.5rem', 
+          marginBottom: '0.5rem',
+          lineHeight: '1.2',
+          fontFamily: 'Impact, "Arial Black", "Franklin Gothic Bold", sans-serif',
+          fontWeight: '900',
+          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 25%, #FFD700 50%, #FFFF00 75%, #FFD700 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          textShadow: '2px 2px 8px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3)',
+          filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))',
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
           Roue des Gagnants
         </h1>
-        
-        {/* Sélecteur de Festival */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '1rem' }}>
-          <button 
-            onClick={() => changerFestival('francofolies')}
-            style={{
-              background: festival === 'francofolies' 
-                ? `linear-gradient(135deg, ${festivalConfigs.francofolies.colors.primary}, ${festivalConfigs.francofolies.colors.secondary})`
-                : 'linear-gradient(to right, #666, #888)',
-              color: 'white',
-              border: 'none',
-              padding: '12px 25px',
-              borderRadius: '25px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              boxShadow: festival === 'francofolies' ? '0 4px 15px rgba(196, 30, 58, 0.4)' : 'none',
-              transform: festival === 'francofolies' ? 'scale(1.05)' : 'scale(1)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            🎵 Francofolies
-          </button>
-          <button 
-            onClick={() => changerFestival('goldencoast')}
-            style={{
-              background: festival === 'goldencoast' 
-                ? `linear-gradient(135deg, ${festivalConfigs.goldencoast.colors.primary}, ${festivalConfigs.goldencoast.colors.secondary})`
-                : 'linear-gradient(to right, #666, #888)',
-              color: 'white',
-              border: 'none',
-              padding: '12px 25px',
-              borderRadius: '25px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              boxShadow: festival === 'goldencoast' ? '0 4px 15px rgba(255, 140, 0, 0.4)' : 'none',
-              transform: festival === 'goldencoast' ? 'scale(1.05)' : 'scale(1)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            🏖️ Golden Coast
-          </button>
-        </div>
-        
-        {/* Nom du festival actuel */}
-        <div style={{ 
-          fontSize: '1.3rem', 
-          fontWeight: 'bold', 
-          color: festivalConfigs[festival].colors.primary,
-          marginBottom: '1rem',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-        }}>
-          {festivalConfigs[festival].name}
-        </div>
-        
-        {/* Sélecteur de jour */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <button 
-            onClick={() => changerJour(1)}
-            style={{
-              background: jour === 1 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '25px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            📅 Jour 1
-          </button>
-          <button 
-            onClick={() => changerJour(2)}
-            style={{
-              background: jour === 2 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '25px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            📅 Jour 2
-          </button>
-        </div>
       </div>
 
-      {/* Roue */}
-      <div className="wheel-container">
-        <SegmentedWheel
-          segments={segments}
-          spinning={spinning}
-          result={result}
-          rotationAngle={rotationAngle}
-          festival={festival}
-        />
+      {/* Layout principal en 3 colonnes */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 400px 1fr',
+        gap: '2rem',
+        alignItems: 'center',
+        minHeight: '450px',
+        marginBottom: '2rem'
+      }}>
+        
+        {/* Colonne gauche - Logo France TV */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <img 
+            src="/francetv.png" 
+            alt="France TV" 
+            style={{ 
+              height: '100px',
+              objectFit: 'contain'
+            }} 
+          />
+        </div>
+
+        {/* Colonne centrale - Roue */}
+        <div className="wheel-container" style={{ display: 'flex', justifyContent: 'center' }}>
+          <SegmentedWheel
+            segments={segments}
+            spinning={spinning}
+            result={result}
+            rotationAngle={rotationAngle}
+            festival={festival}
+          />
+        </div>
+
+        {/* Colonne droite - Logo Festival */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1.5rem'
+        }}>
+          {/* Logo du festival actuel */}
+          <img 
+            src={`/${festival}.png`}
+            alt={festivalConfigs[festival].name}
+            style={{ 
+              height: '120px',
+              objectFit: 'contain',
+              maxWidth: '250px'
+            }} 
+          />
+
+          {/* Sélecteur de Festival - Mode Admin uniquement */}
+          {showAdminInterface && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <button 
+                onClick={() => changerFestival('francofolies')}
+                style={{
+                  background: festival === 'francofolies' 
+                    ? `linear-gradient(135deg, ${festivalConfigs.francofolies.colors.primary}, ${festivalConfigs.francofolies.colors.secondary})`
+                    : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 25px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: festival === 'francofolies' ? '0 4px 15px rgba(196, 30, 58, 0.4)' : 'none',
+                  transform: festival === 'francofolies' ? 'scale(1.05)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🎵 Francofolies
+              </button>
+              <button 
+                onClick={() => changerFestival('goldencoast')}
+                style={{
+                  background: festival === 'goldencoast' 
+                    ? `linear-gradient(135deg, ${festivalConfigs.goldencoast.colors.primary}, ${festivalConfigs.goldencoast.colors.secondary})`
+                    : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 25px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  boxShadow: festival === 'goldencoast' ? '0 4px 15px rgba(255, 140, 0, 0.4)' : 'none',
+                  transform: festival === 'goldencoast' ? 'scale(1.05)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                🏖️ Golden Coast
+              </button>
+            </div>
+          )}
+
+          {/* Sélecteur de jour - Mode Admin uniquement */}
+          {showAdminInterface && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                onClick={() => changerJour(1)}
+                style={{
+                  background: jour === 1 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                📅 Jour 1
+              </button>
+              <button 
+                onClick={() => changerJour(2)}
+                style={{
+                  background: jour === 2 ? 'linear-gradient(to right, #FFD700, #FFA500)' : 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '25px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                📅 Jour 2
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Boutons principaux */}
@@ -591,44 +766,66 @@ function App() {
         )}
       </div>
 
-      {/* Statistiques pour l'admin */}
-      <div style={{ 
-        position: 'fixed', 
-        bottom: '10px', 
-        right: '10px', 
-        background: 'rgba(0,0,0,0.8)', 
-        color: 'white', 
-        padding: '10px', 
-        borderRadius: '10px',
-        fontSize: '12px',
-        maxWidth: '200px'
-      }}>
-        <div><strong>📊 Jour {jour}</strong></div>
-        {segments.filter(s => s.type === 'lot').map(segment => {
-          const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
-          const restant = segment.stockParJour - distribue;
-          return (
-            <div key={segment.id}>
-              {segment.title.split(' ')[1]}: {distribue}/{segment.stockParJour} ({restant} restants)
-            </div>
-          );
-        })}
-        <button 
-          onClick={resetComplet}
-          style={{ 
-            background: '#ff4444', 
-            color: 'white', 
-            border: 'none', 
-            padding: '5px 10px', 
-            borderRadius: '5px', 
-            fontSize: '10px',
-            marginTop: '10px',
-            cursor: 'pointer'
-          }}
-        >
-          🔄 Reset
-        </button>
-      </div>
+      {/* Statistiques pour l'admin - Mode Admin uniquement */}
+      {showAdminInterface && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '10px', 
+          background: 'rgba(0,0,0,0.8)', 
+          color: 'white', 
+          padding: '10px', 
+          borderRadius: '10px',
+          fontSize: '12px',
+          maxWidth: '200px'
+        }}>
+          <div><strong>📊 Jour {jour}</strong></div>
+          {segments.filter(s => s.type === 'lot').map(segment => {
+            const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
+            const restant = segment.stockParJour - distribue;
+            // Afficher le titre complet ou le tronquer si trop long
+            const displayTitle = segment.title.length > 12 ? segment.title.substring(0, 12) + '...' : segment.title;
+            return (
+              <div key={segment.id}>
+                {displayTitle}: {distribue}/{segment.stockParJour} ({restant} restants)
+              </div>
+            );
+          })}
+          <button 
+            onClick={resetComplet}
+            style={{ 
+              background: '#ff4444', 
+              color: 'white', 
+              border: 'none', 
+              padding: '5px 10px', 
+              borderRadius: '5px', 
+              fontSize: '10px',
+              marginTop: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            🔄 Reset
+          </button>
+          
+          {/* Bouton pour masquer le mode admin */}
+          <button 
+            onClick={() => setShowAdminInterface(false)}
+            style={{ 
+              background: '#333', 
+              color: 'white', 
+              border: 'none', 
+              padding: '5px 10px', 
+              borderRadius: '5px', 
+              fontSize: '10px',
+              marginTop: '5px',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            👁️ Masquer Admin
+          </button>
+        </div>
+      )}
 
       {/* Popup Question Bonus */}
       {showBonusPopup && (
