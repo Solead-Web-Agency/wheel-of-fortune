@@ -257,7 +257,6 @@ function SegmentedWheel({ segments, rotationAngle, festival }: {
 
 function App() {
   const [festival, setFestival] = useState<Festival>('francofolies');
-  const [segments, setSegments] = useState<WheelSegment[]>(festivalConfigs.francofolies.segments);
 
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<WheelSegment | null>(null);
@@ -316,7 +315,6 @@ function App() {
   // Changer de festival
   const changerFestival = (nouveauFestival: Festival) => {
     setFestival(nouveauFestival);
-    setSegments(festivalConfigs[nouveauFestival].segments);
     setResult(null);
     setRotationAngle(0);
     
