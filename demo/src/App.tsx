@@ -249,6 +249,7 @@ function App() {
   });
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   
   // Mode admin caché
   const [showAdminInterface, setShowAdminInterface] = useState(false);
@@ -454,6 +455,11 @@ function App() {
     saveData(newStockManager, nouveauJour);
   };
 
+  // Demander confirmation pour le reset
+  const demanderResetConfirmation = () => {
+    setShowResetConfirm(true);
+  };
+
   // Reset complet
   const resetComplet = () => {
     const newStockManager = { jour: 1, lotsDistribuesAujourdhui: {}, totalDistribue: {} };
@@ -463,6 +469,7 @@ function App() {
     setRotationAngle(0);
     setShowWinnerPopup(false);
     setShowBonusPopup(false);
+    setShowResetConfirm(false);
     localStorage.removeItem(`festival-wheel-data-${festival}`);
     console.log(`🔄 Reset complet effectué pour ${festivalConfigs[festival].name}`);
   };
@@ -733,35 +740,7 @@ function App() {
           fontSize: '12px',
           maxWidth: '200px'
         }}>
-          <div><strong>📊 Jour {jour}</strong></div>
-          {segments.filter(s => s.type === 'lot').map(segment => {
-            const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
-            const restant = segment.stockParJour - distribue;
-            // Afficher le titre complet ou le tronquer si trop long
-            const displayTitle = segment.title.length > 12 ? segment.title.substring(0, 12) + '...' : segment.title;
-            return (
-              <div key={segment.id}>
-                {displayTitle}: {distribue}/{segment.stockParJour} ({restant} restants)
-              </div>
-            );
-          })}
-          <button 
-            onClick={resetComplet}
-            style={{ 
-              background: '#ff4444', 
-              color: 'white', 
-              border: 'none', 
-              padding: '5px 10px', 
-              borderRadius: '5px', 
-              fontSize: '10px',
-              marginTop: '10px',
-              cursor: 'pointer'
-            }}
-          >
-            🔄 Reset
-          </button>
-          
-          {/* Bouton pour masquer le mode admin */}
+           {/* Bouton pour masquer le mode admin */}
           <button 
             onClick={() => setShowAdminInterface(false)}
             style={{ 
@@ -778,6 +757,34 @@ function App() {
           >
             👁️ Masquer Admin
           </button>
+          <div><strong>📊 Jour {jour}</strong></div>
+          {segments.filter(s => s.type === 'lot').map(segment => {
+            const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
+            const restant = segment.stockParJour - distribue;
+            // Afficher le titre complet ou le tronquer si trop long
+            const displayTitle = segment.title.length > 12 ? segment.title.substring(0, 12) + '...' : segment.title;
+            return (
+              <div key={segment.id}>
+                {displayTitle}: {distribue}/{segment.stockParJour} ({restant} restants)
+              </div>
+            );
+          })}
+          <button 
+            onClick={demanderResetConfirmation}
+            style={{ 
+              background: '#ff4444', 
+              color: 'white', 
+              border: 'none', 
+              padding: '5px 10px', 
+              borderRadius: '5px', 
+              fontSize: '10px',
+              marginTop: '10px',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            🔄 Reset
+          </button>          
         </div>
       )}
 
@@ -935,6 +942,92 @@ function App() {
             <p style={{ fontSize: '0.9rem', marginTop: '20px', opacity: '0.9' }}>
               💡 Présentez-vous au stand pour répondre et gagner un lot exclusif !
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Confirmation Reset */}
+      {showResetConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff4444, #cc0000)',
+            padding: '40px',
+            borderRadius: '20px',
+            textAlign: 'center',
+            color: 'white',
+            maxWidth: '500px',
+            margin: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div>
+            <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              ATTENTION !
+            </h2>
+            <p style={{ fontSize: '1.1rem', marginBottom: '20px', lineHeight: '1.5' }}>
+              Voulez-vous vraiment remettre à zéro toutes les données ?
+            </p>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '20px',
+              borderRadius: '15px',
+              marginBottom: '30px',
+              textAlign: 'left'
+            }}>
+              <p style={{ fontSize: '1rem', marginBottom: '10px' }}>Cette action va :</p>
+              <ul style={{ fontSize: '0.95rem', listStyleType: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '5px' }}>• Réinitialiser tous les stocks de lots</li>
+                <li style={{ marginBottom: '5px' }}>• Remettre le jour à 1</li>
+                <li style={{ marginBottom: '5px' }}>• Effacer l'historique des gains</li>
+              </ul>
+              <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginTop: '15px', color: '#ffcccc' }}>
+                ⚠️ Cette action est irréversible !
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              <button 
+                onClick={resetComplet}
+                style={{
+                  background: 'linear-gradient(to right, #ff4444, #cc0000)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 25px',
+                  borderRadius: '25px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                🔄 Oui, Remettre à zéro
+              </button>
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                style={{
+                  background: 'linear-gradient(to right, #666, #888)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '15px 25px',
+                  borderRadius: '25px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                ❌ Annuler
+              </button>
+            </div>
           </div>
         </div>
       )}
