@@ -270,6 +270,7 @@ function App() {
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   // Mode admin caché
   const [showAdminInterface, setShowAdminInterface] = useState(false);
@@ -469,6 +470,8 @@ function App() {
     console.log(`🎯 Probabilité: ${(randomValue * 100).toFixed(1)}%`);
     console.log(`🎯 Angle cible: ${targetAngleForFlèche}°`);
 
+
+
     // Animation fluide
     let startTime: number;
     const animate = (timestamp: number) => {
@@ -509,8 +512,10 @@ function App() {
           // Afficher popup selon le type de résultat
           if (selectedSegment.type === 'bonus') {
             setShowBonusPopup(true);
+            setShowConfetti(true);
           } else if (selectedSegment.type === 'lot') {
             setShowWinnerPopup(true);
+            setShowConfetti(true);
           }
           
           console.log(`🏆 Résultat final: ${selectedSegment.title}`);
@@ -551,6 +556,7 @@ function App() {
     setShowWinnerPopup(false);
     setShowBonusPopup(false);
     setShowResetConfirm(false);
+    setShowConfetti(false);
     localStorage.removeItem(`festival-wheel-data-${festival}`);
     console.log(`🔄 Reset complet effectué pour ${festivalConfigs[festival].name}`);
   };
@@ -917,7 +923,10 @@ function App() {
               </h3>
             </div>
                           <button 
-                onClick={() => setShowWinnerPopup(false)}
+                onClick={() => {
+                  setShowWinnerPopup(false);
+                  setShowConfetti(false);
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
                   color: 'white',
@@ -994,7 +1003,10 @@ function App() {
             </div>
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button 
-                onClick={() => setShowBonusPopup(false)}
+                onClick={() => {
+                  setShowBonusPopup(false);
+                  setShowConfetti(false);
+                }}
                 style={{
                   background: 'linear-gradient(to right, #4CAF50, #45a049)',
                   color: 'white',
@@ -1010,7 +1022,10 @@ function App() {
                 ✅ Répondre à la question
               </button>
               <button 
-                onClick={() => setShowBonusPopup(false)}
+                onClick={() => {
+                  setShowBonusPopup(false);
+                  setShowConfetti(false);
+                }}
                 style={{
                   background: 'linear-gradient(to right, #666, #888)',
                   color: 'white',
@@ -1116,6 +1131,63 @@ function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Confettis */}
+      {showConfetti && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          overflow: 'hidden'
+        }}>
+          {/* Génération de confettis multiples */}
+          {Array.from({ length: 80 }, (_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                top: '-20px',
+                left: `${Math.random() * 100}%`,
+                width: `${8 + Math.random() * 8}px`,
+                height: `${8 + Math.random() * 8}px`,
+                backgroundColor: ['#FFD700', '#FF6B35', '#4CAF50', '#2196F3', '#FF1744', '#9C27B0', '#FF9800', '#E91E63', '#00BCD4', '#CDDC39'][Math.floor(Math.random() * 10)],
+                borderRadius: Math.random() > 0.3 ? '50%' : '0',
+                animation: `confetti-fall ${3 + Math.random() * 4}s linear infinite`,
+                animationDelay: `${Math.random() * 3}s`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.3)'
+              }}
+            />
+          ))}
+          
+          {/* CSS Animation intégrée */}
+          <style>{`
+            @keyframes confetti-fall {
+              0% {
+                transform: translateY(-100vh) rotate(0deg) scale(0);
+                opacity: 0;
+              }
+              10% {
+                opacity: 1;
+                transform: translateY(-80vh) rotate(72deg) scale(1);
+              }
+              90% {
+                opacity: 1;
+                transform: translateY(80vh) rotate(648deg) scale(1);
+              }
+              100% {
+                transform: translateY(100vh) rotate(720deg) scale(0);
+                opacity: 0;
+              }
+            }
+          `}</style>
         </div>
       )}
     </div>
