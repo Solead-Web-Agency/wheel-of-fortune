@@ -129,9 +129,30 @@ function SegmentedWheel({ segments, rotationAngle, festival }: {
     ctx.rotate((rotationAngle * Math.PI) / 180);
     ctx.translate(-centerX, -centerY);
 
-    // Dessiner les segments avec tailles personnalisées
-    // 3 segments de 115° + 1 bonus de 15° (plus visible)
-    const segmentAngles = [115, 115, 115, 15]; // en degrés
+    // Calculer les angles dynamiquement selon le nombre de segments
+    const nombreSegments = segments.length;
+    const segmentAngles: number[] = [];
+    
+    if (nombreSegments === 4) {
+      // 4 segments : 3 lots de 115° + 1 bonus de 15°
+      segmentAngles.push(115, 115, 115, 15);
+    } else if (nombreSegments === 3) {
+      // 3 segments : 2 lots de 170° + 1 bonus de 20°
+      segmentAngles.push(170, 170, 20);
+    } else if (nombreSegments === 2) {
+      // 2 segments : 1 lot de 330° + 1 bonus de 30°
+      segmentAngles.push(330, 30);
+    } else if (nombreSegments === 1) {
+      // 1 segment : bonus seul à 360°
+      segmentAngles.push(360);
+    } else {
+      // Fallback : répartition équitable
+      const angleParSegment = 360 / nombreSegments;
+      for (let i = 0; i < nombreSegments; i++) {
+        segmentAngles.push(angleParSegment);
+      }
+    }
+    
     let currentAngle = -90; // Commencer en haut
     
     segments.forEach((segment, index) => {
@@ -256,6 +277,19 @@ function App() {
   const [clickCount, setClickCount] = useState(0);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Calculer les segments disponibles (retirer ceux qui sont épuisés)
+  const getSegmentsDisponibles = (): WheelSegment[] => {
+    const allSegments = festivalConfigs[festival].segments;
+    const segmentsDisponibles = allSegments.filter(segment => {
+      if (segment.type === 'bonus') return true; // Le bonus reste toujours
+      
+      const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
+      return distribue < segment.stockParJour; // Garder seulement les lots non épuisés
+    });
+    
+    return segmentsDisponibles;
+  };
+
   // Fonction pour gérer les clics dans le coin supérieur droit
   const handleCornerClick = () => {
     const newCount = clickCount + 1;
@@ -321,7 +355,7 @@ function App() {
     localStorage.setItem(`festival-wheel-data-${festival}`, JSON.stringify(data));
   };
 
-  // Logique de tirage - 33% pour chaque lot principal + 1% bonus
+  // Logique de tirage - adaptation dynamique selon les segments disponibles
   const spinWheel = () => {
     if (spinning) return;
     
@@ -329,62 +363,111 @@ function App() {
     setSpinning(true);
     setResult(null);
     
+    // Obtenir les segments disponibles (sans ceux épuisés)
+    const segmentsDisponibles = getSegmentsDisponibles();
+    const lotsDisponibles = segmentsDisponibles.filter(s => s.type === 'lot');
+    const bonusDisponible = segmentsDisponibles.find(s => s.type === 'bonus');
+    
+    console.log(`📊 Segments disponibles: ${segmentsDisponibles.length} (${lotsDisponibles.length} lots + ${bonusDisponible ? 1 : 0} bonus)`);
+    
     const randomValue = Math.random();
     let selectedSegment: WheelSegment;
     
-    // 1% de chance pour le bonus
-    if (randomValue < 0.01) {
-      selectedSegment = segments[3]; // Bonus
-      console.log("🌟 BONUS RARE DÉCLENCHÉ ! (1%)");
+    // Si plus de lots disponibles, forcer le bonus
+    if (lotsDisponibles.length === 0) {
+      selectedSegment = bonusDisponible!; // Le bonus est toujours disponible
+      console.log("⚠️ Plus de lots disponibles, attribution du bonus");
     } else {
-      // 99% restants répartis sur les 3 lots principaux (33% chacun)
-      const adjustedRandom = (randomValue - 0.01) / 0.99; // Normaliser sur les 99% restants
+      // 1% de chance pour le bonus (si disponible), sinon répartir sur les lots
+      const bonusChance = bonusDisponible ? 0.01 : 0;
       
-      // Vérifier les stocks disponibles pour les lots principaux
-      const lotsDisponibles = segments.slice(0, 3).filter(segment => {
-        const distribueAujourdhui = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
-        return distribueAujourdhui < segment.stockParJour;
-      });
-
-      if (lotsDisponibles.length === 0) {
-        // Plus de lots disponibles - forcer le bonus
-        selectedSegment = segments[3]; // Bonus
-        console.log("⚠️ Plus de stocks disponibles, attribution du bonus");
+      if (bonusDisponible && randomValue < bonusChance) {
+        selectedSegment = bonusDisponible;
+        console.log("🌟 BONUS RARE DÉCLENCHÉ ! (1%)");
       } else {
-        // Distribution équitable sur les lots disponibles
-        if (adjustedRandom < 0.333) {
-          // 33% - Bobs (si disponible)
-          selectedSegment = lotsDisponibles.find(s => s.id === 1) || lotsDisponibles[0];
-        } else if (adjustedRandom < 0.666) {
-          // 33% - Brumisateur (si disponible)  
-          selectedSegment = lotsDisponibles.find(s => s.id === 2) || lotsDisponibles[0];
-        } else {
-          // 33% - Bananes (si disponible)
-          selectedSegment = lotsDisponibles.find(s => s.id === 3) || lotsDisponibles[0];
-        }
+        // Répartir équitablement sur les lots disponibles
+        const adjustedRandom = bonusDisponible ? (randomValue - bonusChance) / (1 - bonusChance) : randomValue;
+        const lotIndex = Math.floor(adjustedRandom * lotsDisponibles.length);
+        selectedSegment = lotsDisponibles[lotIndex];
+        console.log(`🎯 Lot sélectionné: ${selectedSegment.title} (probabilité: ${(100 / lotsDisponibles.length).toFixed(1)}%)`);
       }
     }
 
     // Calculer l'angle pour que la flèche pointe exactement sur le segment choisi
-    const segmentIndex = segments.findIndex(s => s.id === selectedSegment.id);
+    const segmentIndex = segmentsDisponibles.findIndex(s => s.id === selectedSegment.id);
     
-    // Angles personnalisés pour chaque segment (bonus plus petit)
-    let targetAngleForFlèche: number;
-    if (segmentIndex === 0) { // Bobs
-      targetAngleForFlèche = 59.5; // Centre du segment Bobs (119°)
-    } else if (segmentIndex === 1) { // Brumisateur  
-      targetAngleForFlèche = 178.5; // Centre du segment Brumisateur (119°)
-    } else if (segmentIndex === 2) { // Bananes
-      targetAngleForFlèche = 297.5; // Centre du segment Bananes (119°)
-         } else { // Bonus
-       targetAngleForFlèche = 352.5; // Centre du segment Bonus (15°)
-     }
+    // Fonction pour calculer l'angle cible en fonction de la configuration réelle de la roue
+    const calculerAngleCible = (): number => {
+      const nombreSegments = segmentsDisponibles.length;
+      
+      // Calculer les angles de la même manière que dans SegmentedWheel
+      const segmentAngles: number[] = [];
+      
+      if (nombreSegments === 4) {
+        segmentAngles.push(115, 115, 115, 15);
+      } else if (nombreSegments === 3) {
+        segmentAngles.push(170, 170, 20);
+      } else if (nombreSegments === 2) {
+        segmentAngles.push(330, 30);
+      } else if (nombreSegments === 1) {
+        segmentAngles.push(360);
+      } else {
+        const angleParSegment = 360 / nombreSegments;
+        for (let i = 0; i < nombreSegments; i++) {
+          segmentAngles.push(angleParSegment);
+        }
+      }
+      
+      // Calculer l'angle cumulé jusqu'au segment choisi
+      let currentAngle = -90; // Commencer en haut (même que dans SegmentedWheel)
+      
+      for (let i = 0; i < segmentIndex; i++) {
+        currentAngle += segmentAngles[i];
+      }
+      
+      // Ajouter la moitié de l'angle du segment pour pointer au centre
+      const targetAngle = currentAngle + (segmentAngles[segmentIndex] / 2);
+      
+      return targetAngle;
+    };
+    
+    const targetAngleForFlèche = calculerAngleCible();
     
     // L'angle de rotation nécessaire pour amener le segment sous la flèche
-    const rotationNeeded = -targetAngleForFlèche;
+    // La flèche pointe vers -90° (haut du canvas), pas vers 0°
+    // Il faut ajuster l'angle cible en conséquence
+    const flechePosition = -90; // La flèche est en haut
+    const rotationNeeded = -(targetAngleForFlèche - flechePosition);
     const totalRotation = 360 * 3 + rotationNeeded; // 3 tours + rotation finale
+    
+    console.log(`🔄 Rotation nécessaire: ${rotationNeeded}°`);
+    console.log(`🔄 Rotation totale: ${totalRotation}°`);
+    console.log(`🔄 Position finale de la roue: ${(totalRotation % 360)}°`);
 
-    console.log(`🎯 Segment choisi: ${selectedSegment.title} (index: ${segmentIndex})`);
+    console.log(`🎯 Segment choisi: ${selectedSegment.title} (id: ${selectedSegment.id}, index: ${segmentIndex})`);
+    console.log(`🎯 Segments disponibles:`, segmentsDisponibles.map((s, i) => `[${i}] ${s.title} (id:${s.id})`));
+    
+    // Debug : calculer tous les angles pour comprendre la répartition
+    const nombreSegments = segmentsDisponibles.length;
+    const segmentAngles: number[] = [];
+    if (nombreSegments === 4) {
+      segmentAngles.push(115, 115, 115, 15);
+    } else if (nombreSegments === 3) {
+      segmentAngles.push(170, 170, 20);
+    } else if (nombreSegments === 2) {
+      segmentAngles.push(330, 30);
+    } else if (nombreSegments === 1) {
+      segmentAngles.push(360);
+    }
+    
+    let debugAngle = -90;
+    segmentsDisponibles.forEach((seg, i) => {
+      const startAngle = debugAngle;
+      const endAngle = debugAngle + segmentAngles[i];
+      const centerAngle = debugAngle + segmentAngles[i] / 2;
+      console.log(`🎨 Segment [${i}] ${seg.title}: ${startAngle}° → ${endAngle}° (centre: ${centerAngle}°)`);
+      debugAngle += segmentAngles[i];
+    });
     console.log(`🎯 Probabilité: ${(randomValue * 100).toFixed(1)}%`);
     console.log(`🎯 Angle cible: ${targetAngleForFlèche}°`);
 
@@ -636,7 +719,7 @@ function App() {
             transition: 'filter 0.3s ease'
           }}>
             <SegmentedWheel
-              segments={segments}
+              segments={getSegmentsDisponibles()}
               rotationAngle={rotationAngle}
               festival={festival}
             />
@@ -758,14 +841,20 @@ function App() {
             👁️ Masquer Admin
           </button>
           <div><strong>📊 Jour {jour}</strong></div>
-          {segments.filter(s => s.type === 'lot').map(segment => {
+          {festivalConfigs[festival].segments.filter(s => s.type === 'lot').map(segment => {
             const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
             const restant = segment.stockParJour - distribue;
+            const epuise = restant <= 0;
             // Afficher le titre complet ou le tronquer si trop long
             const displayTitle = segment.title.length > 12 ? segment.title.substring(0, 12) + '...' : segment.title;
             return (
-              <div key={segment.id}>
-                {displayTitle}: {distribue}/{segment.stockParJour} ({restant} restants)
+              <div key={segment.id} style={{ 
+                color: epuise ? '#ff6666' : 'white',
+                textDecoration: epuise ? 'line-through' : 'none',
+                opacity: epuise ? 0.6 : 1
+              }}>
+                {displayTitle}: {distribue}/{segment.stockParJour} 
+                {epuise ? ' ❌ ÉPUISÉ' : ` (${restant} restants)`}
               </div>
             );
           })}
