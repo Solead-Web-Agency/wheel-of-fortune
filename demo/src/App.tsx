@@ -326,7 +326,21 @@ function App() {
   const [usedQuestions, setUsedQuestions] = useState<number[]>([]);
   const [showAnswerFeedback, setShowAnswerFeedback] = useState(false);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
+  
+  // États pour gérer les transitions entre popups
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isPopupTransitioning, setIsPopupTransitioning] = useState(false);
+
+  // Fonction pour transition fluide entre popups
+  const transitionBetweenPopups = (changeFunction: () => void) => {
+    setIsPopupTransitioning(true);
+    setTimeout(() => {
+      changeFunction();
+      setTimeout(() => {
+        setIsPopupTransitioning(false);
+      }, 50); // Petit délai pour que le nouveau popup se monte
+    }, 300); // Durée de l'animation de sortie
+  };
   
   // Mode admin caché
   const [showAdminInterface, setShowAdminInterface] = useState(false);
@@ -439,12 +453,14 @@ function App() {
     setSelectedAnswerIndex(selectedAnswer);
 
     if (selectedAnswer === currentQuestion.correctAnswer) {
-      // Bonne réponse - popup de succès
+      // Bonne réponse - popup de succès avec transition
       setTimeout(() => {
-        setShowBonusQuestion(false);
-        setShowAnswerFeedback(false);
-        setSelectedAnswerIndex(null);
-        setShowSuccessPopup(true);
+        transitionBetweenPopups(() => {
+          setShowBonusQuestion(false);
+          setShowAnswerFeedback(false);
+          setSelectedAnswerIndex(null);
+          setShowSuccessPopup(true);
+        });
       }, 2000);
     } else {
       // Mauvaise réponse - afficher le feedback
@@ -456,18 +472,26 @@ function App() {
   const proceedToNextQuestion = () => {
     const newWrongAnswers = wrongAnswers + 1;
     setWrongAnswers(newWrongAnswers);
-    setShowAnswerFeedback(false);
-    setSelectedAnswerIndex(null);
     
     if (newWrongAnswers >= 2) {
-      // 2 mauvaises réponses - popup "dommage"
-      setShowBonusQuestion(false);
-      setShowFailurePopup(true);
+      // 2 mauvaises réponses - transition vers popup "dommage"
+      transitionBetweenPopups(() => {
+        setShowAnswerFeedback(false);
+        setSelectedAnswerIndex(null);
+        setShowBonusQuestion(false);
+        setShowFailurePopup(true);
+      });
     } else {
-      // 1 mauvaise réponse - deuxième chance avec nouvelle question
-      const newQuestion = getRandomQuestion();
-      setCurrentQuestion(newQuestion);
-      setUsedQuestions(prev => [...prev, newQuestion.id]);
+      // 1 mauvaise réponse - transition vers nouvelle question
+      transitionBetweenPopups(() => {
+        setShowAnswerFeedback(false);
+        setSelectedAnswerIndex(null);
+        const newQuestion = getRandomQuestion();
+        setCurrentQuestion(newQuestion);
+        setUsedQuestions(prev => [...prev, newQuestion.id]);
+        // S'assurer que le popup de question reste visible
+        setShowBonusQuestion(true);
+      });
     }
   };
 
@@ -1001,7 +1025,7 @@ function App() {
 
       {/* Popup Félicitations */}
       {showWinnerPopup && result && result.type === 'lot' && (
-        <div style={{
+        <div className="popup-container" style={{
           position: 'fixed',
           top: '0',
           left: '0',
@@ -1078,7 +1102,7 @@ function App() {
 
       {/* Popup Question Bonus */}
       {showBonusQuestion && currentQuestion && (
-        <div style={{
+        <div className={`popup-container ${isPopupTransitioning ? 'popup-transitioning' : ''}`} style={{
           position: 'fixed',
           top: '0',
           left: '0',
@@ -1088,8 +1112,7 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
-          animation: 'popupFadeIn 0.4s ease-out forwards'
+          zIndex: 1000
         }}>
           <div style={{
             background: `linear-gradient(135deg, ${festivalConfigs[festival].colors.primary}, ${festivalConfigs[festival].colors.secondary})`,
@@ -1099,8 +1122,7 @@ function App() {
             color: 'white',
             maxWidth: '600px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-            animation: 'popupFadeIn 0.4s ease-out forwards'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
 
             <h2 style={{ fontSize: '1.8rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1234,7 +1256,7 @@ function App() {
 
       {/* Popup Échec après 2 mauvaises réponses */}
       {showFailurePopup && (
-        <div style={{
+        <div className={`popup-container ${isPopupTransitioning ? 'popup-transitioning' : ''}`} style={{
           position: 'fixed',
           top: '0',
           left: '0',
@@ -1244,8 +1266,7 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
-          animation: 'popupFadeIn 0.4s ease-out forwards'
+          zIndex: 1000
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #FF6B35, #FF4444)',
@@ -1255,8 +1276,7 @@ function App() {
             color: 'white',
             maxWidth: '500px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-            animation: 'popupFadeIn 0.4s ease-out forwards'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>😅</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1279,10 +1299,12 @@ function App() {
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button 
                 onClick={() => {
-                  setShowFailurePopup(false);
-                  setCurrentQuestion(null);
-                  setWrongAnswers(0);
-                  startBonusProcess();
+                  transitionBetweenPopups(() => {
+                    setShowFailurePopup(false);
+                    setCurrentQuestion(null);
+                    setWrongAnswers(0);
+                    startBonusProcess();
+                  });
                 }}
                 style={{
                   background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
@@ -1345,7 +1367,7 @@ function App() {
 
       {/* Popup Succès après bonne réponse */}
       {showSuccessPopup && (
-        <div style={{
+        <div className={`popup-container ${isPopupTransitioning ? 'popup-transitioning' : ''}`} style={{
           position: 'fixed',
           top: '0',
           left: '0',
@@ -1355,8 +1377,7 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
-          animation: 'popupFadeIn 0.4s ease-out forwards'
+          zIndex: 1000
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #4CAF50, #45a049)',
@@ -1366,8 +1387,7 @@ function App() {
             color: 'white',
             maxWidth: '500px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-            animation: 'popupFadeIn 0.4s ease-out forwards'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🎉</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1389,10 +1409,12 @@ function App() {
             </div>
             <button 
               onClick={() => {
-                setShowSuccessPopup(false);
-                setCurrentQuestion(null);
-                setWrongAnswers(0);
-                spinWheel();
+                transitionBetweenPopups(() => {
+                  setShowSuccessPopup(false);
+                  setCurrentQuestion(null);
+                  setWrongAnswers(0);
+                  spinWheel();
+                });
               }}
               style={{
                 background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
@@ -1425,7 +1447,7 @@ function App() {
 
       {/* Popup Confirmation Reset */}
       {showResetConfirm && (
-        <div style={{
+        <div className="popup-container" style={{
           position: 'fixed',
           top: '0',
           left: '0',
@@ -1593,35 +1615,7 @@ function App() {
               }
             }
             
-            .popup-enter {
-              animation: popupFadeIn 0.4s ease-out forwards;
-            }
-            
-            .popup-exit {
-              animation: popupFadeOut 0.3s ease-in forwards;
-            }
-            
-            @keyframes popupFadeIn {
-              0% {
-                opacity: 0;
-                transform: scale(0.8) translateY(-20px);
-              }
-              100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-              }
-            }
-            
-            @keyframes popupFadeOut {
-              0% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-              }
-              100% {
-                opacity: 0;
-                transform: scale(0.9) translateY(20px);
-              }
-            }
+
           `}</style>
         </div>
       )}

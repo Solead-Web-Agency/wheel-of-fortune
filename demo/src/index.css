@@ -188,3 +188,38 @@ body {
     transform: scale(1.05);
   }
 }
+
+/* Animations des popups */
+.popup-container {
+  animation: popupFadeIn 0.4s ease-out forwards;
+}
+
+.popup-exiting {
+  animation: popupFadeOut 0.3s ease-in forwards !important;
+}
+
+.popup-transitioning {
+  animation: popupFadeOut 0.3s ease-in forwards !important;
+}
+
+@keyframes popupFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popupFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+}
