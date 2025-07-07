@@ -324,6 +324,8 @@ function App() {
   const [showFailurePopup, setShowFailurePopup] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [usedQuestions, setUsedQuestions] = useState<number[]>([]);
+  const [showAnswerFeedback, setShowAnswerFeedback] = useState(false);
+  const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   
   // Mode admin caché
@@ -426,31 +428,46 @@ function App() {
     setUsedQuestions(prev => [...prev, question.id]);
     setShowBonusQuestion(true);
     setWrongAnswers(0);
+    setShowAnswerFeedback(false);
+    setSelectedAnswerIndex(null);
   };
 
   // Fonction pour gérer la réponse à la question bonus
   const handleBonusAnswer = (selectedAnswer: number) => {
     if (!currentQuestion) return;
 
+    setSelectedAnswerIndex(selectedAnswer);
+
     if (selectedAnswer === currentQuestion.correctAnswer) {
       // Bonne réponse - popup de succès
-      setShowBonusQuestion(false);
-      setShowSuccessPopup(true);
-    } else {
-      // Mauvaise réponse
-      const newWrongAnswers = wrongAnswers + 1;
-      setWrongAnswers(newWrongAnswers);
-      
-      if (newWrongAnswers >= 2) {
-        // 2 mauvaises réponses - popup "dommage"
+      setTimeout(() => {
         setShowBonusQuestion(false);
-        setShowFailurePopup(true);
-      } else {
-        // 1 mauvaise réponse - deuxième chance avec nouvelle question
-        const newQuestion = getRandomQuestion();
-        setCurrentQuestion(newQuestion);
-        setUsedQuestions(prev => [...prev, newQuestion.id]);
-      }
+        setShowAnswerFeedback(false);
+        setSelectedAnswerIndex(null);
+        setShowSuccessPopup(true);
+      }, 2000);
+    } else {
+      // Mauvaise réponse - afficher le feedback
+      setShowAnswerFeedback(true);
+    }
+  };
+
+  // Fonction pour passer à la question suivante après une mauvaise réponse
+  const proceedToNextQuestion = () => {
+    const newWrongAnswers = wrongAnswers + 1;
+    setWrongAnswers(newWrongAnswers);
+    setShowAnswerFeedback(false);
+    setSelectedAnswerIndex(null);
+    
+    if (newWrongAnswers >= 2) {
+      // 2 mauvaises réponses - popup "dommage"
+      setShowBonusQuestion(false);
+      setShowFailurePopup(true);
+    } else {
+      // 1 mauvaise réponse - deuxième chance avec nouvelle question
+      const newQuestion = getRandomQuestion();
+      setCurrentQuestion(newQuestion);
+      setUsedQuestions(prev => [...prev, newQuestion.id]);
     }
   };
 
@@ -623,6 +640,8 @@ function App() {
     setShowBonusQuestion(false);
     setShowFailurePopup(false);
     setShowSuccessPopup(false);
+    setShowAnswerFeedback(false);
+    setSelectedAnswerIndex(null);
     setCurrentQuestion(null);
     setWrongAnswers(0);
     saveData(newStockManager, nouveauJour);
@@ -646,6 +665,8 @@ function App() {
     setShowBonusQuestion(false);
     setShowFailurePopup(false);
     setShowSuccessPopup(false);
+    setShowAnswerFeedback(false);
+    setSelectedAnswerIndex(null);
     setCurrentQuestion(null);
     setWrongAnswers(0);
     setUsedQuestions([]);
@@ -1067,7 +1088,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          animation: 'popupFadeIn 0.4s ease-out forwards'
         }}>
           <div style={{
             background: `linear-gradient(135deg, ${festivalConfigs[festival].colors.primary}, ${festivalConfigs[festival].colors.secondary})`,
@@ -1077,7 +1099,8 @@ function App() {
             color: 'white',
             maxWidth: '600px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            animation: 'popupFadeIn 0.4s ease-out forwards'
           }}>
 
             <h2 style={{ fontSize: '1.8rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1099,39 +1122,112 @@ function App() {
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {currentQuestion.answers.map((answer, index) => (
+              {currentQuestion.answers.map((answer, index) => {
+                let buttonStyle = {
+                  background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
+                  color: 'white',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  padding: '15px 25px',
+                  borderRadius: '25px',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  cursor: showAnswerFeedback ? 'default' : 'pointer',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'left' as const
+                };
+
+                // Si on affiche le feedback des réponses
+                if (showAnswerFeedback || (selectedAnswerIndex === currentQuestion.correctAnswer && selectedAnswerIndex !== null)) {
+                  if (index === currentQuestion.correctAnswer) {
+                    // Bonne réponse en vert avec effet de pulsation si sélectionnée
+                    const isSelectedCorrect = selectedAnswerIndex === currentQuestion.correctAnswer;
+                    buttonStyle = {
+                      ...buttonStyle,
+                      background: 'linear-gradient(to right, #4CAF50, #45a049)',
+                      border: '3px solid #4CAF50',
+                      boxShadow: isSelectedCorrect 
+                        ? '0 4px 30px rgba(76, 175, 80, 0.8), 0 0 40px rgba(76, 175, 80, 0.6)' 
+                        : '0 4px 20px rgba(76, 175, 80, 0.4)'
+                    };
+                  } else if (selectedAnswerIndex === index || (showAnswerFeedback && selectedAnswerIndex !== currentQuestion.correctAnswer)) {
+                    // Mauvaise réponse en rouge
+                    buttonStyle = {
+                      ...buttonStyle,
+                      background: 'linear-gradient(to right, #f44336, #d32f2f)',
+                      border: '3px solid #f44336',
+                      boxShadow: '0 4px 20px rgba(244, 67, 54, 0.4)'
+                    };
+                  }
+                }
+
+                // Ajouter les propriétés transform et animation via style inline
+                const isSelectedCorrect = selectedAnswerIndex === currentQuestion.correctAnswer && index === currentQuestion.correctAnswer;
+                const additionalStyles = isSelectedCorrect ? {
+                  transform: 'scale(1.05)',
+                  animation: 'correctAnswerPulse 0.3s ease-in-out infinite'
+                } : {};
+
+                return (
+                  <button 
+                    key={index}
+                    onClick={() => !showAnswerFeedback && handleBonusAnswer(index)}
+                    style={{ ...buttonStyle, ...additionalStyles }}
+                    onMouseOver={(e) => {
+                      if (!showAnswerFeedback && selectedAnswerIndex !== currentQuestion.correctAnswer) {
+                        e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2))';
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!showAnswerFeedback && selectedAnswerIndex !== currentQuestion.correctAnswer) {
+                        e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
+                    }}
+                  >
+                    {String.fromCharCode(65 + index)} - {answer}
+                  </button>
+                );
+              })}
+            </div>
+            {!showAnswerFeedback ? (
+              <p style={{ fontSize: '0.9rem', marginTop: '20px', opacity: '0.8' }}>
+                💡 {wrongAnswers === 0 ? 'Répondez correctement pour accéder à la roue gagnante !' : 'Dernière chance pour répondre correctement !'}
+              </p>
+            ) : (
+              <div style={{ marginTop: '30px' }}>
+                <p style={{ fontSize: '1rem', marginBottom: '20px', color: '#ffcccc' }}>
+                  ❌ Mauvaise réponse ! La bonne réponse était encadrée en vert.
+                </p>
                 <button 
-                  key={index}
-                  onClick={() => handleBonusAnswer(index)}
+                  onClick={proceedToNextQuestion}
                   style={{
-                    background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
+                    background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
                     color: 'white',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    padding: '15px 25px',
-                    borderRadius: '25px',
+                    border: 'none',
+                    padding: '12px 30px',
+                    borderRadius: '50px',
                     fontSize: '1.1rem',
                     fontWeight: 'bold',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)',
                     transition: 'all 0.3s ease',
-                    textAlign: 'left'
+                    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2))';
-                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.8)';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))';
                     e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
                   }}
                 >
-                  {String.fromCharCode(65 + index)} - {answer}
+                  {wrongAnswers === 0 ? '🎯 Dernière chance' : '💔 Voir le résultat'}
                 </button>
-              ))}
-            </div>
-            <p style={{ fontSize: '0.9rem', marginTop: '20px', opacity: '0.8' }}>
-              💡 {wrongAnswers === 0 ? 'Répondez correctement pour accéder à la roue gagnante !' : 'Dernière chance pour répondre correctement !'}
-            </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1148,7 +1244,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          animation: 'popupFadeIn 0.4s ease-out forwards'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #FF6B35, #FF4444)',
@@ -1158,7 +1255,8 @@ function App() {
             color: 'white',
             maxWidth: '500px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            animation: 'popupFadeIn 0.4s ease-out forwards'
           }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>😅</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1257,7 +1355,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          animation: 'popupFadeIn 0.4s ease-out forwards'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #4CAF50, #45a049)',
@@ -1267,7 +1366,8 @@ function App() {
             color: 'white',
             maxWidth: '500px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            animation: 'popupFadeIn 0.4s ease-out forwards'
           }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🎉</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1335,7 +1435,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          animation: 'popupFadeIn 0.4s ease-out forwards'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #ff4444, #cc0000)',
@@ -1345,7 +1446,8 @@ function App() {
             color: 'white',
             maxWidth: '500px',
             margin: '20px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            animation: 'popupFadeIn 0.4s ease-out forwards'
           }}>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
@@ -1460,6 +1562,64 @@ function App() {
               100% {
                 transform: translateY(100vh) rotate(720deg) scale(0);
                 opacity: 0;
+              }
+            }
+            
+            @keyframes correctAnswerPulse {
+              0% { 
+                box-shadow: 0 4px 30px rgba(76, 175, 80, 0.8), 0 0 40px rgba(76, 175, 80, 0.6);
+                transform: scale(1.05);
+                background: linear-gradient(to right, #4CAF50, #45a049);
+              }
+              25% {
+                box-shadow: 0 6px 40px rgba(76, 175, 80, 1), 0 0 60px rgba(76, 175, 80, 0.9);
+                transform: scale(1.08);
+                background: linear-gradient(to right, #66BB6A, #4CAF50);
+              }
+              50% { 
+                box-shadow: 0 8px 50px rgba(76, 175, 80, 1.2), 0 0 80px rgba(76, 175, 80, 1);
+                transform: scale(1.1);
+                background: linear-gradient(to right, #81C784, #66BB6A);
+              }
+              75% {
+                box-shadow: 0 6px 40px rgba(76, 175, 80, 1), 0 0 60px rgba(76, 175, 80, 0.9);
+                transform: scale(1.08);
+                background: linear-gradient(to right, #66BB6A, #4CAF50);
+              }
+              100% {
+                box-shadow: 0 4px 30px rgba(76, 175, 80, 0.8), 0 0 40px rgba(76, 175, 80, 0.6);
+                transform: scale(1.05);
+                background: linear-gradient(to right, #4CAF50, #45a049);
+              }
+            }
+            
+            .popup-enter {
+              animation: popupFadeIn 0.4s ease-out forwards;
+            }
+            
+            .popup-exit {
+              animation: popupFadeOut 0.3s ease-in forwards;
+            }
+            
+            @keyframes popupFadeIn {
+              0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(-20px);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+            
+            @keyframes popupFadeOut {
+              0% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              100% {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
               }
             }
           `}</style>
