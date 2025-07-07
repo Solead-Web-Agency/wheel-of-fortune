@@ -1219,8 +1219,8 @@ function App() {
               </p>
             ) : (
               <div style={{ marginTop: '30px' }}>
-                <p style={{ fontSize: '1rem', marginBottom: '20px', color: '#ffcccc' }}>
-                  ❌ Mauvaise réponse ! La bonne réponse était encadrée en vert.
+                <p style={{ fontSize: '1rem', marginBottom: '20px', color: 'white' }}>
+                  ❌ Mauvaise réponse ! La bonne réponse était <strong>{String.fromCharCode(65 + currentQuestion.correctAnswer)}</strong>.
                 </p>
                 <button 
                   onClick={proceedToNextQuestion}
