@@ -9,7 +9,7 @@ interface WheelSegment {
   textColor: string;
   stock: number;
   stockParJour: number;
-  type: 'lot' | 'defaite' | 'bonus';
+  type: 'lot' | 'defaite';
   image?: string; // URL de l'image pour le segment
   resultImage?: string; // URL de l'image pour l'affichage du résultat
 }
@@ -20,38 +20,101 @@ interface StockManager {
   totalDistribue: { [key: number]: number };
 }
 
+interface BonusQuestion {
+  id: number;
+  question: string;
+  answers: string[];
+  correctAnswer: number; // Index de la bonne réponse (0, 1, ou 2)
+}
+
 type Festival = 'francofolies' | 'goldencoast';
 
-// Configuration des festivals
+// Questions bonus avec les bonnes réponses
+const bonusQuestions: BonusQuestion[] = [
+  {
+    id: 1,
+    question: "Combien d'événements culturels ont été soutenus par France Télévisions en 2024 ?",
+    answers: ["100", "250", "300"],
+    correctAnswer: 1 // 250
+  },
+  {
+    id: 2,
+    question: "Combien de spectacles ont été diffusés sur les antennes du Groupe France Télévisions en 2024 ?",
+    answers: ["400", "300", "500"],
+    correctAnswer: 2 // 500
+  },
+  {
+    id: 3,
+    question: "Sur quel canal est diffusée Culturebox l'émission ?",
+    answers: ["Canal 4", "Canal 14", "Canal 19"],
+    correctAnswer: 2 // Canal 19
+  },
+  {
+    id: 4,
+    question: "Comment s'appelle l'émission d'Oxmo Puccino consacrée au rap ?",
+    answers: ["Zone B", "Escalier B", "Bâtiment B"],
+    correctAnswer: 2 // Bâtiment B
+  },
+  {
+    id: 5,
+    question: "Qui sont les présentateurs de Culturebox ?",
+    answers: ["Cécile Grès et Mathieu Vidard", "Laurence Théatin et Kessi Weishaupt", "Daphné Bürki et Raphäl Yem"],
+    correctAnswer: 1 // Laurence Théatin et Kessi Weishaupt
+  },
+  {
+    id: 6,
+    question: "Où s'est déroulée la finale de l'Eurovision cette année ?",
+    answers: ["En Suisse", "En Espagne", "En Suède"],
+    correctAnswer: 0 // En Suisse
+  },
+  {
+    id: 7,
+    question: "Quel anniversaire l'émission Taratata a-t-elle récemment célébré ?",
+    answers: ["ses 20 ans", "ses 30 ans", "ses 40 ans"],
+    correctAnswer: 1 // ses 30 ans
+  },
+  {
+    id: 8,
+    question: "Quel programme de France.tv propose des concerts en live de vos artistes préférés, directement dans votre salon ?",
+    answers: ["Basique, le concert", "Culturebox, l'émission", "Plan B"],
+    correctAnswer: 0 // Basique, le concert
+  },
+  {
+    id: 9,
+    question: "Quel programme disponible sur France.tv met en avant, chaque mercredi, les jeunes talents de la scène musicale de demain ?",
+    answers: ["Basique, les sessions", "Renversant", "J'aime à dire"],
+    correctAnswer: 0 // Basique, les sessions
+  }
+];
+
+// Configuration des festivals avec couleurs France TV (.tv)
 const festivalConfigs = {
   francofolies: {
     name: "Francofolies",
     colors: {
-      primary: "#C41E3A",
-      secondary: "#2196F3", 
-      accent: "#FFD700",
-      bonus: "#FF6B35"
+      primary: "#ff503b",    // Rouge personnalisé
+      secondary: "#ffac44",  // Jaune personnalisé
+      accent: "#42adce",     // Bleu personnalisé
+      bonus: "#00AA44"       // Vert France TV
     },
     segments: [
-      { id: 1, title: "chapeau Bob", color: "#C41E3A", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
-      { id: 2, title: "Brumisateur", color: "#2196F3", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "sac Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
-      { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+      { id: 1, title: "BOB", color: "#ff503b", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "BRUMISATEUR", color: "#ffac44", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "SAC BANANE", color: "#42adce", textColor: "#FFFFFF", stock: 600, stockParJour: 300, type: 'lot' as const }
     ]
   },
   goldencoast: {
     name: "Golden Coast",
     colors: {
-      primary: "#FF8C00",
-      secondary: "#32CD32",
-      accent: "#FFD700", 
-      bonus: "#FF6B35"
+      primary: "#ff503b",    // Rouge personnalisé
+      secondary: "#ffac44",  // Jaune personnalisé
+      accent: "#42adce",     // Bleu personnalisé
+      bonus: "#00AA44"       // Vert France TV
     },
     segments: [
-      { id: 1, title: "chapeau Bob", color: "#FF8C00", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
-      { id: 2, title: "Brumisateur", color: "#32CD32", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
-      { id: 3, title: "sac Bananes", color: "#FFD700", textColor: "#000000", stock: 600, stockParJour: 300, type: 'lot' as const },
-      { id: 4, title: "✨ BONUS", color: "#FF6B35", textColor: "#FFFFFF", stock: 999999, stockParJour: 999999, type: 'bonus' as const },
+      { id: 1, title: "BOB", color: "#ff503b", textColor: "#FFFFFF", stock: 3000, stockParJour: 1500, type: 'lot' as const },
+      { id: 2, title: "BRUMISATEUR", color: "#ffac44", textColor: "#FFFFFF", stock: 700, stockParJour: 350, type: 'lot' as const },
+      { id: 3, title: "SAC BANANE", color: "#42adce", textColor: "#FFFFFF", stock: 600, stockParJour: 300, type: 'lot' as const }
     ]
   }
 };
@@ -133,17 +196,14 @@ function SegmentedWheel({ segments, rotationAngle, festival }: {
     const nombreSegments = segments.length;
     const segmentAngles: number[] = [];
     
-    if (nombreSegments === 4) {
-      // 4 segments : 3 lots de 115° + 1 bonus de 15°
-      segmentAngles.push(115, 115, 115, 15);
-    } else if (nombreSegments === 3) {
-      // 3 segments : 2 lots de 170° + 1 bonus de 20°
-      segmentAngles.push(170, 170, 20);
+    if (nombreSegments === 3) {
+      // 3 lots : répartition équitable
+      segmentAngles.push(120, 120, 120);
     } else if (nombreSegments === 2) {
-      // 2 segments : 1 lot de 330° + 1 bonus de 30°
-      segmentAngles.push(330, 30);
+      // 2 lots : répartition équitable
+      segmentAngles.push(180, 180);
     } else if (nombreSegments === 1) {
-      // 1 segment : bonus seul à 360°
+      // 1 lot : tout le cercle
       segmentAngles.push(360);
     } else {
       // Fallback : répartition équitable
@@ -175,27 +235,15 @@ function SegmentedWheel({ segments, rotationAngle, festival }: {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Texte du segment - courbé pour tous les lots, droit pour le bonus
+      // Texte du segment - texte courbé pour tous les segments
       ctx.fillStyle = segment.textColor;
       
-      if (segment.type === 'bonus') {
-        ctx.font = "bold 14px Arial";
-        // Bonus : texte droit comme avant car la case est trop petite pour le texte courbé
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + segmentAngleRadians / 2);
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(segment.title, radius / 2.5, 0);
-        ctx.restore();
-      } else {
-        // Ajuster la taille de police selon la longueur du texte
-        const isLongText = segment.title.length > 8;
-        ctx.font = isLongText ? "bold 14px Arial" : "bold 16px Arial";
-        
-        // Tous les lots : texte courbé (avec algorithme amélioré)
-        drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.65);
-      }
+      // Ajuster la taille de police selon la longueur du texte
+      const isLongText = segment.title.length > 8;
+      ctx.font = isLongText ? "bold 14px Arial" : "bold 16px Arial";
+      
+      // Tous les segments : texte courbé (avec algorithme amélioré)
+      drawCurvedText(ctx, segment.title, centerX, centerY, startAngle + segmentAngleRadians / 2, radius * 0.65);
       
       currentAngle += segmentAngleDegrees;
     });
@@ -267,9 +315,15 @@ function App() {
     lotsDistribuesAujourdhui: {},
     totalDistribue: {}
   });
-  const [showBonusPopup, setShowBonusPopup] = useState(false);
+
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showBonusQuestion, setShowBonusQuestion] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<BonusQuestion | null>(null);
+  const [wrongAnswers, setWrongAnswers] = useState(0);
+  const [showFailurePopup, setShowFailurePopup] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [usedQuestions, setUsedQuestions] = useState<number[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   
   // Mode admin caché
@@ -281,8 +335,6 @@ function App() {
   const getSegmentsDisponibles = (): WheelSegment[] => {
     const allSegments = festivalConfigs[festival].segments;
     const segmentsDisponibles = allSegments.filter(segment => {
-      if (segment.type === 'bonus') return true; // Le bonus reste toujours
-      
       const distribue = stockManager.lotsDistribuesAujourdhui[segment.id] || 0;
       return distribue < segment.stockParJour; // Garder seulement les lots non épuisés
     });
@@ -354,6 +406,54 @@ function App() {
     localStorage.setItem(`festival-wheel-data-${festival}`, JSON.stringify(data));
   };
 
+  // Fonction pour obtenir une question aléatoire non utilisée
+  const getRandomQuestion = (): BonusQuestion => {
+    const availableQuestions = bonusQuestions.filter(q => !usedQuestions.includes(q.id));
+    
+    // Si toutes les questions ont été utilisées, reset
+    if (availableQuestions.length === 0) {
+      setUsedQuestions([]);
+      return bonusQuestions[Math.floor(Math.random() * bonusQuestions.length)];
+    }
+    
+    return availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+  };
+
+  // Fonction pour démarrer le processus bonus
+  const startBonusProcess = () => {
+    const question = getRandomQuestion();
+    setCurrentQuestion(question);
+    setUsedQuestions(prev => [...prev, question.id]);
+    setShowBonusQuestion(true);
+    setWrongAnswers(0);
+  };
+
+  // Fonction pour gérer la réponse à la question bonus
+  const handleBonusAnswer = (selectedAnswer: number) => {
+    if (!currentQuestion) return;
+
+    if (selectedAnswer === currentQuestion.correctAnswer) {
+      // Bonne réponse - popup de succès
+      setShowBonusQuestion(false);
+      setShowSuccessPopup(true);
+    } else {
+      // Mauvaise réponse
+      const newWrongAnswers = wrongAnswers + 1;
+      setWrongAnswers(newWrongAnswers);
+      
+      if (newWrongAnswers >= 2) {
+        // 2 mauvaises réponses - popup "dommage"
+        setShowBonusQuestion(false);
+        setShowFailurePopup(true);
+      } else {
+        // 1 mauvaise réponse - deuxième chance avec nouvelle question
+        const newQuestion = getRandomQuestion();
+        setCurrentQuestion(newQuestion);
+        setUsedQuestions(prev => [...prev, newQuestion.id]);
+      }
+    }
+  };
+
   // Logique de tirage - adaptation dynamique selon les segments disponibles
   const spinWheel = () => {
     if (spinning) return;
@@ -364,32 +464,22 @@ function App() {
     
     // Obtenir les segments disponibles (sans ceux épuisés)
     const segmentsDisponibles = getSegmentsDisponibles();
-    const lotsDisponibles = segmentsDisponibles.filter(s => s.type === 'lot');
-    const bonusDisponible = segmentsDisponibles.find(s => s.type === 'bonus');
     
-    console.log(`📊 Segments disponibles: ${segmentsDisponibles.length} (${lotsDisponibles.length} lots + ${bonusDisponible ? 1 : 0} bonus)`);
+    console.log(`📊 Segments disponibles: ${segmentsDisponibles.length} lots`);
     
     const randomValue = Math.random();
     let selectedSegment: WheelSegment;
     
-    // Si plus de lots disponibles, forcer le bonus
-    if (lotsDisponibles.length === 0) {
-      selectedSegment = bonusDisponible!; // Le bonus est toujours disponible
-      console.log("⚠️ Plus de lots disponibles, attribution du bonus");
+    // Si plus de lots disponibles, arrêter le jeu
+    if (segmentsDisponibles.length === 0) {
+      console.log("⚠️ Plus de lots disponibles");
+      setSpinning(false);
+      return;
     } else {
-      // 1% de chance pour le bonus (si disponible), sinon répartir sur les lots
-      const bonusChance = bonusDisponible ? 0.01 : 0;
-      
-      if (bonusDisponible && randomValue < bonusChance) {
-        selectedSegment = bonusDisponible;
-        console.log("🌟 BONUS RARE DÉCLENCHÉ ! (1%)");
-      } else {
-        // Répartir équitablement sur les lots disponibles
-        const adjustedRandom = bonusDisponible ? (randomValue - bonusChance) / (1 - bonusChance) : randomValue;
-        const lotIndex = Math.floor(adjustedRandom * lotsDisponibles.length);
-        selectedSegment = lotsDisponibles[lotIndex];
-        console.log(`🎯 Lot sélectionné: ${selectedSegment.title} (probabilité: ${(100 / lotsDisponibles.length).toFixed(1)}%)`);
-      }
+      // Répartir équitablement sur les lots disponibles
+      const lotIndex = Math.floor(randomValue * segmentsDisponibles.length);
+      selectedSegment = segmentsDisponibles[lotIndex];
+      console.log(`🎯 Lot sélectionné: ${selectedSegment.title} (probabilité: ${(100 / segmentsDisponibles.length).toFixed(1)}%)`);
     }
 
     // Calculer l'angle pour que la flèche pointe exactement sur le segment choisi
@@ -402,15 +492,17 @@ function App() {
       // Calculer les angles de la même manière que dans SegmentedWheel
       const segmentAngles: number[] = [];
       
-      if (nombreSegments === 4) {
-        segmentAngles.push(115, 115, 115, 15);
-      } else if (nombreSegments === 3) {
-        segmentAngles.push(170, 170, 20);
+      if (nombreSegments === 3) {
+        // 3 lots : répartition équitable
+        segmentAngles.push(120, 120, 120);
       } else if (nombreSegments === 2) {
-        segmentAngles.push(330, 30);
+        // 2 lots : répartition équitable
+        segmentAngles.push(180, 180);
       } else if (nombreSegments === 1) {
+        // 1 lot : tout le cercle
         segmentAngles.push(360);
       } else {
+        // Fallback : répartition équitable
         const angleParSegment = 360 / nombreSegments;
         for (let i = 0; i < nombreSegments; i++) {
           segmentAngles.push(angleParSegment);
@@ -449,12 +541,10 @@ function App() {
     // Debug : calculer tous les angles pour comprendre la répartition
     const nombreSegments = segmentsDisponibles.length;
     const segmentAngles: number[] = [];
-    if (nombreSegments === 4) {
-      segmentAngles.push(115, 115, 115, 15);
-    } else if (nombreSegments === 3) {
-      segmentAngles.push(170, 170, 20);
+    if (nombreSegments === 3) {
+      segmentAngles.push(120, 120, 120);
     } else if (nombreSegments === 2) {
-      segmentAngles.push(330, 30);
+      segmentAngles.push(180, 180);
     } else if (nombreSegments === 1) {
       segmentAngles.push(360);
     }
@@ -489,34 +579,27 @@ function App() {
       } else {
         // Fin de l'animation
         setTimeout(() => {
-          // Mettre à jour les stocks (sauf pour bonus)
-          if (selectedSegment.type !== 'bonus') {
-            const newStockManager = {
-              ...stockManager,
-              lotsDistribuesAujourdhui: {
-                ...stockManager.lotsDistribuesAujourdhui,
-                [selectedSegment.id]: (stockManager.lotsDistribuesAujourdhui[selectedSegment.id] || 0) + 1
-              },
-              totalDistribue: {
-                ...stockManager.totalDistribue,
-                [selectedSegment.id]: (stockManager.totalDistribue[selectedSegment.id] || 0) + 1
-              }
-            };
-            setStockManager(newStockManager);
-            saveData(newStockManager, jour);
-          }
+          // Mettre à jour les stocks pour tous les lots
+          const newStockManager = {
+            ...stockManager,
+            lotsDistribuesAujourdhui: {
+              ...stockManager.lotsDistribuesAujourdhui,
+              [selectedSegment.id]: (stockManager.lotsDistribuesAujourdhui[selectedSegment.id] || 0) + 1
+            },
+            totalDistribue: {
+              ...stockManager.totalDistribue,
+              [selectedSegment.id]: (stockManager.totalDistribue[selectedSegment.id] || 0) + 1
+            }
+          };
+          setStockManager(newStockManager);
+          saveData(newStockManager, jour);
           
           setResult(selectedSegment);
           setSpinning(false);
           
-          // Afficher popup selon le type de résultat
-          if (selectedSegment.type === 'bonus') {
-            setShowBonusPopup(true);
-            setShowConfetti(true);
-          } else if (selectedSegment.type === 'lot') {
-            setShowWinnerPopup(true);
-            setShowConfetti(true);
-          }
+          // Afficher popup et confettis pour tous les lots
+          setShowWinnerPopup(true);
+          setShowConfetti(true);
           
           console.log(`🏆 Résultat final: ${selectedSegment.title}`);
         }, 500);
@@ -537,7 +620,11 @@ function App() {
     setJour(nouveauJour);
     setResult(null);
     setShowWinnerPopup(false);
-    setShowBonusPopup(false);
+    setShowBonusQuestion(false);
+    setShowFailurePopup(false);
+    setShowSuccessPopup(false);
+    setCurrentQuestion(null);
+    setWrongAnswers(0);
     saveData(newStockManager, nouveauJour);
   };
 
@@ -554,15 +641,25 @@ function App() {
     setResult(null);
     setRotationAngle(0);
     setShowWinnerPopup(false);
-    setShowBonusPopup(false);
     setShowResetConfirm(false);
     setShowConfetti(false);
+    setShowBonusQuestion(false);
+    setShowFailurePopup(false);
+    setShowSuccessPopup(false);
+    setCurrentQuestion(null);
+    setWrongAnswers(0);
+    setUsedQuestions([]);
     localStorage.removeItem(`festival-wheel-data-${festival}`);
     console.log(`🔄 Reset complet effectué pour ${festivalConfigs[festival].name}`);
   };
 
   return (
-    <div className="app-container" style={{ padding: '1rem', position: 'relative' }}>
+    <div className="app-container" style={{ 
+      padding: '1rem', 
+      position: 'relative',
+      minHeight: '100vh',
+      background: '#000000'
+    }}>
       {/* Zone cliquable invisible pour activer le mode admin */}
       <div 
         onClick={handleCornerClick}
@@ -732,7 +829,7 @@ function App() {
           {/* Bouton centré sur la roue */}
           {!spinning && (
             <button 
-              onClick={spinWheel}
+              onClick={startBonusProcess}
               className="spin-button"
               style={{ 
                 position: 'absolute',
@@ -762,7 +859,7 @@ function App() {
                 e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
               }}
             >
-              🎲 LANCER LA ROUE
+              🎯 TENTER SA CHANCE
             </button>
           )}
           
@@ -956,8 +1053,10 @@ function App() {
         </div>
       )}
 
+
+
       {/* Popup Question Bonus */}
-      {showBonusPopup && (
+      {showBonusQuestion && currentQuestion && (
         <div style={{
           position: 'fixed',
           top: '0',
@@ -971,7 +1070,88 @@ function App() {
           zIndex: 1000
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #FF6B35, #F7931E)',
+            background: `linear-gradient(135deg, ${festivalConfigs[festival].colors.primary}, ${festivalConfigs[festival].colors.secondary})`,
+            padding: '40px',
+            borderRadius: '20px',
+            textAlign: 'center',
+            color: 'white',
+            maxWidth: '600px',
+            margin: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              {wrongAnswers === 0 ? '🎯 QUESTION !' : '🔄 DEUXIÈME CHANCE !'}
+            </h2>
+            {wrongAnswers > 0 && (
+              <p style={{ fontSize: '1rem', marginBottom: '20px', opacity: '0.9' }}>
+                Mauvaise réponse ! Une nouvelle question pour vous donner une seconde chance.
+              </p>
+            )}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              padding: '25px',
+              borderRadius: '15px',
+              marginBottom: '30px'
+            }}>
+              <p style={{ fontSize: '1.3rem', fontWeight: 'bold', lineHeight: '1.4', marginBottom: '20px' }}>
+                {currentQuestion.question}
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {currentQuestion.answers.map((answer, index) => (
+                <button 
+                  key={index}
+                  onClick={() => handleBonusAnswer(index)}
+                  style={{
+                    background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))',
+                    color: 'white',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    padding: '15px 25px',
+                    borderRadius: '25px',
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                    transition: 'all 0.3s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2))';
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1))';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  {String.fromCharCode(65 + index)} - {answer}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.9rem', marginTop: '20px', opacity: '0.8' }}>
+              💡 {wrongAnswers === 0 ? 'Répondez correctement pour accéder à la roue gagnante !' : 'Dernière chance pour répondre correctement !'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Échec après 2 mauvaises réponses */}
+      {showFailurePopup && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #FF6B35, #FF4444)',
             padding: '40px',
             borderRadius: '20px',
             textAlign: 'center',
@@ -980,13 +1160,13 @@ function App() {
             margin: '20px',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
-            <div style={{ fontSize: '60px', marginBottom: '20px' }}>✨</div>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>😅</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-              🎊 QUESTION BONUS ! 🎊
+              Dommage !
             </h2>
             <p style={{ fontSize: '1.2rem', marginBottom: '30px', lineHeight: '1.5' }}>
-              Félicitations ! Vous avez décroché le bonus rare !<br/>
-              <strong>(1% de chance seulement !)</strong>
+              Vous n'avez pas trouvé les bonnes réponses cette fois-ci.<br/>
+              <strong>Mais vous pouvez retenter votre chance !</strong>
             </p>
             <div style={{
               background: 'rgba(255, 255, 255, 0.2)',
@@ -994,56 +1174,151 @@ function App() {
               borderRadius: '15px',
               marginBottom: '30px'
             }}>
-              <h3 style={{ marginBottom: '15px', fontSize: '1.3rem' }}>
-                📝 Question Bonus :
-              </h3>
               <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
-                "En quelle année ont eu lieu les premières Francofolies de La Rochelle ?"
+                🎯 Nouvelles questions vous attendent
               </p>
             </div>
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button 
                 onClick={() => {
-                  setShowBonusPopup(false);
-                  setShowConfetti(false);
+                  setShowFailurePopup(false);
+                  setCurrentQuestion(null);
+                  setWrongAnswers(0);
+                  startBonusProcess();
                 }}
                 style={{
-                  background: 'linear-gradient(to right, #4CAF50, #45a049)',
+                  background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
                   color: 'white',
                   border: 'none',
-                  padding: '12px 25px',
-                  borderRadius: '25px',
-                  fontSize: '1rem',
+                  padding: '15px 25px',
+                  borderRadius: '50px',
+                  fontSize: '1.1rem',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)',
+                  transition: 'all 0.3s ease',
+                  textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                  minWidth: '180px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.8)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
                 }}
               >
-                ✅ Répondre à la question
+                🔄 Nouvelles questions
               </button>
               <button 
                 onClick={() => {
-                  setShowBonusPopup(false);
-                  setShowConfetti(false);
+                  setShowFailurePopup(false);
+                  setCurrentQuestion(null);
+                  setWrongAnswers(0);
                 }}
                 style={{
                   background: 'linear-gradient(to right, #666, #888)',
                   color: 'white',
                   border: 'none',
-                  padding: '12px 25px',
-                  borderRadius: '25px',
-                  fontSize: '1rem',
+                  padding: '15px 25px',
+                  borderRadius: '50px',
+                  fontSize: '1.1rem',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                  transition: 'all 0.3s ease',
+                  textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                  minWidth: '130px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                ❌ Fermer
+                J'ai compris
               </button>
             </div>
-            <p style={{ fontSize: '0.9rem', marginTop: '20px', opacity: '0.9' }}>
-              💡 Présentez-vous au stand pour répondre et gagner un lot exclusif !
+          </div>
+        </div>
+      )}
+
+      {/* Popup Succès après bonne réponse */}
+      {showSuccessPopup && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #4CAF50, #45a049)',
+            padding: '40px',
+            borderRadius: '20px',
+            textAlign: 'center',
+            color: 'white',
+            maxWidth: '500px',
+            margin: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>🎉</div>
+            <h2 style={{ fontSize: '2rem', marginBottom: '20px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              Bravo !
+            </h2>
+            <p style={{ fontSize: '1.2rem', marginBottom: '30px', lineHeight: '1.5' }}>
+              Excellente réponse !<br/>
+              <strong>Vous avez gagné un accès à la roue des gagnants.</strong>
             </p>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              padding: '20px',
+              borderRadius: '15px',
+              marginBottom: '30px'
+            }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                🎁 La roue est toujours gagnante !
+              </p>
+            </div>
+            <button 
+              onClick={() => {
+                setShowSuccessPopup(false);
+                setCurrentQuestion(null);
+                setWrongAnswers(0);
+                spinWheel();
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '15px 35px',
+                borderRadius: '50px',
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)',
+                transition: 'all 0.3s ease',
+                textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                minWidth: '220px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.8)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.5)';
+              }}
+            >
+              🎲 Accéder à la roue !
+            </button>
           </div>
         </div>
       )}
