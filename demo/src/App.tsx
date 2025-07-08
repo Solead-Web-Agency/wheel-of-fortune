@@ -35,7 +35,7 @@ const bonusQuestions: BonusQuestion[] = [
     id: 1,
     question: "Combien d'événements culturels ont été soutenus par France Télévisions en 2024 ?",
     answers: ["100", "250", "300"],
-    correctAnswer: 2 // 250
+    correctAnswer: 2 // 300
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ const bonusQuestions: BonusQuestion[] = [
     id: 3,
     question: "Sur quel canal est diffusée Culturebox l'émission ?",
     answers: ["Canal 4", "Canal 14", "Canal 19"],
-    correctAnswer: 0 // Canal 19
+    correctAnswer: 0 // Canal 4
   },
   {
     id: 4,
@@ -59,7 +59,7 @@ const bonusQuestions: BonusQuestion[] = [
     id: 5,
     question: "Qui sont les présentateurs de Culturebox ?",
     answers: ["Cécile Grès et Mathieu Vidard", "Laurence Théatin et Kessi Weishaupt", "Daphné Bürki et Raphäl Yem"],
-    correctAnswer: 2 // Laurence Théatin et Kessi Weishaupt
+    correctAnswer: 2 // Daphné Bürki et Raphäl Yem
   },
   {
     id: 6,
@@ -71,7 +71,7 @@ const bonusQuestions: BonusQuestion[] = [
     id: 7,
     question: "Quel anniversaire l'émission Taratata a-t-elle récemment célébré ?",
     answers: ["ses 20 ans", "ses 30 ans", "ses 40 ans"],
-    correctAnswer: 2 // ses 30 ans
+    correctAnswer: 2 // ses 40 ans
   },
   {
     id: 8,
