@@ -71,7 +71,7 @@ const bonusQuestions: BonusQuestion[] = [
     id: 7,
     question: "Quel anniversaire l'émission Taratata a-t-elle récemment célébré ?",
     answers: ["ses 20 ans", "ses 30 ans", "ses 40 ans"],
-    correctAnswer: 2 // ses 40 ans
+    correctAnswer: 1 // ses 40 ans
   },
   {
     id: 8,
